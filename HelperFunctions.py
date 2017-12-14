@@ -160,6 +160,19 @@ def __get_team_stats_data(url_to_load, data_to_write, team_dict):
         data_to_write.append(0)
     return data_to_write[:]
 
+# Slice dataframe with the given years
+def slice_date(raw_dataframe, begin_year, end_year):
+    return raw_dataframe[begin_year <= raw_dataframe.Year < end_year]
+
+def create_feature_df():
+    columns = ["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score",
+               "Away_PPG_ma", "Home_PPG_ma", "Away_PPGA_ma", "Home_PPG_ma",
+               "Away_FD_ma", "Home_FD_ma", "Away_FDA_ma", "Home_FDA_ma",
+               "Away_RYPG_ma", "Home_RYPG_ma", "Away_RYPGA_ma", "Home_RYPGA_ma",
+               "Away_PYPG_ma", "Home_PYPG_ma", "Away_PYPGA_ma", "Home_PYPGA_ma",
+               "Away_TO_ma", "Home_TO_ma", "Away_TOA_ma", "Home_TOA_ma",
+               "Away_ELO", "Home_ELO", "Away_WR", "Home_WR", "CF_Model_Results", "Vegas_Line"]
+    return pandas.DataFrame(columns=columns)
 
 
 def moving_average(dataframe, length, indices_home, indices_away):

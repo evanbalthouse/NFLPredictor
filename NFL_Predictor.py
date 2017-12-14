@@ -5,14 +5,18 @@ import pandas as pd
 team_dict = hf.create_team_dict()
 
 # File name for raw results
-raw_results = "results_data.csv"
+raw_results = "results_data_full.csv"
 
 # Pull data from pref.com
 years = str(list(range(2002, 2017)))
 #hf.web_crawler(years, raw_results, team_dict)
 
 raw_data = pd.read_csv(raw_results)
+
+raw_data["Week_ID"] = range(raw_data.shape[0])
 print(raw_data.head())
+
+feature_df = hf.create_feature_df()
 
 #data_filename = "results_data_test.csv"
 #team_file_stump = directory_stump + "team_data/raw_data_"
