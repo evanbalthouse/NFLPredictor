@@ -1,22 +1,250 @@
 import HelperFunctions as hf
 import pandas as pd
+import requests
+import re
+from bs4 import BeautifulSoup, Comment
+import requests, re
+import pandas
+import csv
+import numpy
+import matplotlib.pyplot as plt
+from sklearn import cross_validation as cv
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn import ensemble
+from sklearn import linear_model
+from keras.layers import Input, Dense, Dropout, Flatten, Embedding, merge
+from keras.regularizers import l2
+from keras.optimizers import Adam
+from keras.models import Model
+
+# Creates team id lookup table
+def create_team_dict():
+    team_dict = {}
+    team_dict["Carolina Panthers"] = 0
+    team_dict["Denver Broncos"] = 1
+    team_dict["Green Bay Packers"] = 2
+    team_dict["Jacksonville Jaguars"] = 3
+    team_dict["Buffalo Bills"] = 4
+    team_dict["Baltimore Ravens"] = 5
+    team_dict["Tampa Bay Buccaneers"] = 6
+    team_dict["Atlanta Falcons"] = 7
+    team_dict["Oakland Raiders"] = 8
+    team_dict["New Orleans Saints"] = 9
+    team_dict["Chicago Bears"] = 10
+    team_dict["Houston Texans"] = 11
+    team_dict["Cleveland Browns"] = 12
+    team_dict["Philadelphia Eagles"] = 13
+    team_dict["Cincinnati Bengals"] = 14
+    team_dict["New York Jets"] = 15
+    team_dict["San Diego Chargers"] = 16
+    team_dict["Kansas City Chiefs"] = 17
+    team_dict["Minnesota Vikings"] = 18
+    team_dict["Tennessee Titans"] = 19
+    team_dict["Miami Dolphins"] = 20
+    team_dict["Seattle Seahawks"] = 21
+    team_dict["Detroit Lions"] = 22
+    team_dict["Indianapolis Colts"] = 23
+    team_dict["New York Giants"] = 24
+    team_dict["Dallas Cowboys"] = 25
+    team_dict["New England Patriots"] = 26
+    team_dict["Arizona Cardinals"] = 27
+    team_dict["Pittsburgh Steelers"] = 28
+    team_dict["Washington Redskins"] = 29
+    team_dict["Los Angeles Rams"] = 30
+    team_dict["San Francisco 49ers"] = 31
+    team_dict["St. Louis Rams"] = 30
+    return team_dict;
+
+# Crawls pref.com for the given years and prints results to a .csv with the given name
+def web_crawler(years, filename, team_dict):
+    weeks = []
+    for i in range(3, 4):
+        weeks.append("week_" + str(i))
+
+    to_write = list()
+    to_write.append(["Year", "Week", "Date", "Away_Team", "Away_Score", "Home_Team", "Home_Score", "Away_First_Downs",
+                     "Home_First_Downs", "Away_Rushing_Yards", "Home_Rushing_Yards", "Away_Passing_Yards",
+                     "Home_Passing_Yards", "Away_Turnovers", "Home_Turnovers", "Favored_Team", "Vegas_Line"])
+
+    base_url = "http://static.pfref.com"
+    base_url_to_scrape = base_url + "/years/"
+
+    for year in years:
+        year_url_to_scrape = base_url_to_scrape + year + "/"
+
+        for week in weeks:
+            url_to_scrape = year_url_to_scrape + week + ".htm"
+            print("Loading week " + str(week.split("_")[1]) + " of the " + str(year) + " season.")
+            r = requests.get(url_to_scrape)
+
+            soup = BeautifulSoup(r.text, "html.parser")
+
+            for all_games in soup.select(".game_summaries"):
+
+                for game in all_games.select(".teams"):
+                    game_data_to_write = list()
+                    game_data_to_write.append(year)
+                    game_data_to_write.append(week)
+                    game_data = game.findAll("tr")
+
+                    box_url = ""
+
+                    for data in game_data:
+                        date = data.string
+
+                        if date is not None:
+                            game_data_to_write.append(str(date))
+                        else:
+                            team = team_dict[data.find("td").string]
+                            game_data_to_write.append(str(team))
+                            game_data_to_write.append(str(data.find("td", {"class": "right"}).string))
+
+                            box_score = data.find("td", {"class": "right gamelink"})
+                            if box_score is not None:
+                                box_url = base_url + box_score.a.get("href")
+
+                    __get_team_stats_data(box_url, game_data_to_write, team_dict)
+                    to_write.append(game_data_to_write)
+
+    with open(filename, "w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerows(to_write)
+
+# Helper function for web_crawler
+def __get_team_stats_data(url_to_load, data_to_write, team_dict):
+    r = requests.get(url_to_load)
+    soup = BeautifulSoup(r.text, "html.parser")
+
+    comments = soup.findAll(text=lambda text: isinstance(text, Comment))
+    rx = re.compile(r'<table.+?id="team_stats".+?>[\s\S]+?</table>')
+
+    table = ""
+    for comment in comments:
+        try:
+            table = rx.search(comment.string).group(0)
+            break
+        except:
+            pass
+    bs_table = BeautifulSoup(table, "html.parser")
+    stats_indices = [0, 1, 2, 3, 8, 9, 14, 15]
+    table_stats = bs_table.find_all("td", {"class": "center"})
+
+    for i in stats_indices:
+        if i == 2 or i == 3:
+            data_to_write.append(table_stats[i].string.split("-")[1])
+        else:
+            data_to_write.append(table_stats[i].string)
+
+    comments = soup.findAll(text=lambda text: isinstance(text, Comment))
+    rx = re.compile(r'<table.+?id="game_info".+?>[\s\S]+?</table>')
+    table = ""
+    for comment in comments:
+        try:
+            table = rx.search(comment.string).group(0)
+            break
+        except:
+            pass
+
+    vl_table = BeautifulSoup(table, "html.parser")
+    table_stats = vl_table.find_all("td", {"class": "center"})
+    line = table_stats[len(table_stats) - 2].string
+    line_array = line.split(" ")
+    team = " ".join(line_array[0:len(line_array) - 1])
+    points = str(line_array[-1])
+
+    if line != "Pick":
+        data_to_write.append(team_dict[team])
+        data_to_write.append(points)
+    else:
+        data_to_write.append(-1)
+        data_to_write.append(0)
+    return data_to_write[:]
+
+# Slice dataframe with the given years, inclusive on begin, exclusive on end
+def slice_date(raw_dataframe, begin_year, end_year):
+    return raw_dataframe[(raw_dataframe["Year"] >= begin_year) & (raw_dataframe["Year"] < end_year)]
+
+def create_feature_df():
+    columns = ["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score",
+               "Away_PPG_ma", "Home_PPG_ma", "Away_PPGA_ma", "Home_PPG_ma",
+               "Away_FD_ma", "Home_FD_ma", "Away_FDA_ma", "Home_FDA_ma",
+               "Away_RYPG_ma", "Home_RYPG_ma", "Away_RYPGA_ma", "Home_RYPGA_ma",
+               "Away_PYPG_ma", "Home_PYPG_ma", "Away_PYPGA_ma", "Home_PYPGA_ma",
+               "Away_TO_ma", "Home_TO_ma", "Away_TOA_ma", "Home_TOA_ma",
+               "Away_ELO", "Home_ELO", "Away_WR", "Home_WR", "CF_Model_Results", "Vegas_Line"]
+    return pandas.DataFrame(columns=columns)
+
+def get_team_results(raw_data, team_id):
+    return raw_data.loc[(raw_data["Home_Team"] == team_id) | (raw_data["Away_Team"] == team_id)]
+
+
+
+
+
+
+
+
+
 
 # Create team id lookup
-team_dict = hf.create_team_dict()
+team_dict = create_team_dict()
 
 # File name for raw results
 raw_results = "results_data_full.csv"
 
 # Pull data from pref.com
 years = str(list(range(2002, 2017)))
-#hf.web_crawler(years, raw_results, team_dict)
 
+# Either crawl web to populate data, or read in .csv containing raw data
+#hf.web_crawler(years, raw_results, team_dict)
 raw_data = pd.read_csv(raw_results)
 
+# Create week_id column
 raw_data["Week_ID"] = range(raw_data.shape[0])
-print(raw_data.head())
+#print(raw_data.head())
 
-feature_df = hf.create_feature_df()
+print(slice_date(raw_data, 2004, 2006).shape)
+
+# Create DataFrame to hold future features
+feature_df = create_feature_df()
+
+feature_df[["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score"]] = raw_data[["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score"]]
+#print(feature_df.head())
+
+for i in range(32):
+    print(get_team_results(raw_data, i).shape)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #data_filename = "results_data_test.csv"
 #team_file_stump = directory_stump + "team_data/raw_data_"
