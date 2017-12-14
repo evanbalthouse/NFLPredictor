@@ -17,7 +17,7 @@ from keras.regularizers import l2
 from keras.optimizers import Adam
 from keras.models import Model
 
-
+# Creates team id lookup table
 def create_team_dict():
     team_dict = {}
     team_dict["Carolina Panthers"] = 0
@@ -55,6 +55,7 @@ def create_team_dict():
     team_dict["St. Louis Rams"] = 30
     return team_dict;
 
+# Crawls pref.com for the given years and prints results to a .csv with the given name
 def web_crawler(years, filename, team_dict):
     weeks = []
     for i in range(3, 4):
@@ -102,15 +103,15 @@ def web_crawler(years, filename, team_dict):
                             if box_score is not None:
                                 box_url = base_url + box_score.a.get("href")
 
-                    get_team_stats_data(box_url, game_data_to_write, team_dict)
+                    __get_team_stats_data(box_url, game_data_to_write, team_dict)
                     to_write.append(game_data_to_write)
 
     with open(filename, "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerows(to_write)
 
-
-def get_team_stats_data(url_to_load, data_to_write, team_dict):
+# Helper function for web_crawler
+def __get_team_stats_data(url_to_load, data_to_write, team_dict):
     r = requests.get(url_to_load)
     soup = BeautifulSoup(r.text, "html.parser")
 
