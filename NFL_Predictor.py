@@ -262,18 +262,26 @@ for i in range(32):
 feature_df = list()
 for index, row in raw_data.iterrows():
     list_to_add = list()
-    list_to_add.append(row[["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score", "Favored_Team", "Vegas_Line"]])
-    away_stats = team_results_dict[row["Away_Team"]].iloc[(row["Week_ID"] == index),["For_PPG", "For_FD", "For_RYPG", "For_PYPG", "For_TO",
+    list_to_add.extend(row[["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score", "Favored_Team", "Vegas_Line"]])
+    away_team_stats = team_results_dict[row["Away_Team"]]
+    home_team_stats = team_results_dict[row["Home_Team"]]
+
+    away_stats = away_team_stats.loc[(away_team_stats["Week_ID"] == index), ["For_PPG", "For_FD", "For_RYPG", "For_PYPG", "For_TO",
                                                                           "Against_PPG", "Against_FD", "Against_RYPG",
                                                                           "Against_PYPG", "Against_TO"]]
-    home_stats = team_results_dict[row["Home_Team"]].iloc[(row["Week_ID"] == index),["For_PPG", "For_FD", "For_RYPG", "For_PYPG", "For_TO",
+    home_stats = home_team_stats.loc[(home_team_stats["Week_ID"] == index), ["For_PPG", "For_FD", "For_RYPG", "For_PYPG", "For_TO",
                                                                           "Against_PPG", "Against_FD", "Against_RYPG",
                                                                           "Against_PYPG", "Against_TO"]]
-    list_to_add.append(away_stats)
-    list_to_add.append(home_stats)
+
+    for index, row in away_stats.iterrows():
+        list_to_add.extend(row)
+    for index, row in home_stats.iterrows():
+        list_to_add.extend(row)
+
     feature_df.append(list_to_add)
 
-print(feature_df.head())
+features = pandas.DataFrame(feature_df, columns=feature_columns[:27])
+print(features.head())
 
 
 
