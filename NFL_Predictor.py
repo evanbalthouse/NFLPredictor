@@ -165,17 +165,6 @@ def get_team_stats_data(url_to_load, data_to_write, team_dict):
 def year_slice(raw_dataframe, begin_year, end_year):
     return raw_dataframe[(raw_dataframe["Year"] >= begin_year) & (raw_dataframe["Year"] < end_year)]
 
-# Initialize dataset of features for modeling
-def create_feature_df():
-    columns = ["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score",
-               "Away_PPG_ma", "Home_PPG_ma", "Away_PPGA_ma", "Home_PPGA_ma",
-               "Away_FD_ma", "Home_FD_ma", "Away_FDA_ma", "Home_FDA_ma",
-               "Away_RYPG_ma", "Home_RYPG_ma", "Away_RYPGA_ma", "Home_RYPGA_ma",
-               "Away_PYPG_ma", "Home_PYPG_ma", "Away_PYPGA_ma", "Home_PYPGA_ma",
-               "Away_TO_ma", "Home_TO_ma", "Away_TOA_ma", "Home_TOA_ma",
-               "Away_ELO", "Home_ELO", "Away_WR", "Home_WR", "CF_Model_Results", "Vegas_Line"]
-    return pandas.DataFrame(columns=columns)
-
 # Return team specific data in an analysis friendly manner - with for-against format vs home-away format
 def get_team_results(raw_data, team_id):
     team_specific_results = raw_data.loc[(raw_data["Home_Team"] == team_id) | (raw_data["Away_Team"] == team_id)]
@@ -216,24 +205,26 @@ raw_results = "results_data_full.csv"
 # Rolling average length
 rolling_avg_window = 4
 
+# Hold the columns for the future feature dataframe
+feature_columns = ["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score", "Favored_Team", "Vegas_Line",
+                   "Away_PPG_ma", "Away_FD_ma", "Away_RYPG_ma", "Away_PYPG_ma", "Away_TO_ma",
+                   "Away_PPGA_ma", "Away_FDA_ma", "Away_RYPGA_ma", "Away_PYPGA_ma", "Away_TOA_ma",
+                   "Home_PPG_ma", "Home_FD_ma", "Home_RYPG_ma", "Home_PYPG_ma", "Home_TO_ma",
+                   "Home_PPGA_ma", "Home_FDA_ma", "Home_RYPGA_ma", "Home_PYPGA_ma", "Home_TOA_ma",
+                   "Away_ELO", "Home_ELO", "Away_WR", "Home_WR", "CF_Model_Results", "Vegas_Line"]
+
 # Initialize years list to pull data for
 years = list(map(str, list(range(2002, 2017))))
 
-# Either crawl web to populate data, or read in .csv containing raw data
+##########################################################################
+# Either crawl web to populate data, or read in .csv containing raw data #
+##########################################################################
 #hf.web_crawler(years, raw_results, team_dict)
 raw_data = pd.read_csv(raw_results)
 
 # Create week_id column
 raw_data["Week_ID"] = range(raw_data.shape[0])
 #print(raw_data.head())
-
-# Create DataFrame to hold future features
-feature_df = create_feature_df()
-
-# Initialize feature DataFrame columns
-feature_df[["Week_ID", "Away_Team", "Away_Score", "Home_Team",
-            "Home_Score", "Favored_Team", "Vegas_Line"]] = raw_data[["Week_ID", "Away_Team", "Away_Score", "Home_Team",
-                                                                     "Home_Score", "Favored_Team", "Vegas_Line"]]
 
 # Double check on get_team_results function, should be 16 games * len(years)
 for i in range(32):
@@ -267,10 +258,22 @@ for i in range(32):
     assert team_results_dict[i].shape == (16 * len(years), 16)
     assert team_results_dict[i].isnull().sum().sum() == ((rolling_avg_window - 1) * 10)
 
+#Initialize feature dataframe with moving averages
+feature_df = list()
+for index, row in raw_data.iterrows():
+    list_to_add = list()
+    list_to_add.append(row[["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score", "Favored_Team", "Vegas_Line"]])
+    away_stats = team_results_dict[row["Away_Team"]].iloc[(row["Week_ID"] == index),["For_PPG", "For_FD", "For_RYPG", "For_PYPG", "For_TO",
+                                                                          "Against_PPG", "Against_FD", "Against_RYPG",
+                                                                          "Against_PYPG", "Against_TO"]]
+    home_stats = team_results_dict[row["Home_Team"]].iloc[(row["Week_ID"] == index),["For_PPG", "For_FD", "For_RYPG", "For_PYPG", "For_TO",
+                                                                          "Against_PPG", "Against_FD", "Against_RYPG",
+                                                                          "Against_PYPG", "Against_TO"]]
+    list_to_add.append(away_stats)
+    list_to_add.append(home_stats)
+    feature_df.append(list_to_add)
 
-
-
-
+print(feature_df.head())
 
 
 
