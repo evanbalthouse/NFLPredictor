@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="c9469fce-868b-451e-82da-ef3e7872223a" name="Default" comment="" />
+    <list default="true" id="c9469fce-868b-451e-82da-ef3e7872223a" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/NFL_Predictor.py" afterPath="$PROJECT_DIR$/NFL_Predictor.py" />
+    </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -14,12 +16,14 @@
       <file leaf-file-name="NFL_Predictor.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/NFL_Predictor.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="356">
-              <caret line="191" column="39" lean-forward="true" selection-start-line="191" selection-start-column="39" selection-end-line="191" selection-end-column="39" />
+            <state relative-caret-position="394">
+              <caret line="198" column="0" lean-forward="true" selection-start-line="198" selection-start-column="0" selection-end-line="198" selection-end-column="0" />
               <folding>
                 <element signature="e#0#28#0" expanded="true" />
                 <element signature="e#621#1947#0" expanded="false" />
-                <element signature="e#4386#5932#0" expanded="false" />
+                <element signature="e#2085#4280#0" expanded="false" />
+                <element signature="e#4382#5928#0" expanded="false" />
+                <element signature="e#6237#6837#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -182,12 +186,14 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/NFL_Predictor.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="356">
-          <caret line="191" column="39" lean-forward="true" selection-start-line="191" selection-start-column="39" selection-end-line="191" selection-end-column="39" />
+        <state relative-caret-position="394">
+          <caret line="198" column="0" lean-forward="true" selection-start-line="198" selection-start-column="0" selection-end-line="198" selection-end-column="0" />
           <folding>
             <element signature="e#0#28#0" expanded="true" />
             <element signature="e#621#1947#0" expanded="false" />
-            <element signature="e#4386#5932#0" expanded="false" />
+            <element signature="e#2085#4280#0" expanded="false" />
+            <element signature="e#4382#5928#0" expanded="false" />
+            <element signature="e#6237#6837#0" expanded="false" />
           </folding>
         </state>
       </provider>

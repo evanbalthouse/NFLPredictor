@@ -104,7 +104,7 @@ def web_crawler(years, filename, team_dict):
                             if box_score is not None:
                                 box_url = base_url + box_score.a.get("href")
 
-                    __get_team_stats_data(box_url, game_data_to_write, team_dict)
+                    get_team_stats_data(box_url, game_data_to_write, team_dict)
                     to_write.append(game_data_to_write)
 
     with open(filename, "w", newline="") as file:
@@ -112,7 +112,7 @@ def web_crawler(years, filename, team_dict):
         writer.writerows(to_write)
 
 # Helper function for web_crawler
-def __get_team_stats_data(url_to_load, data_to_write, team_dict):
+def get_team_stats_data(url_to_load, data_to_write, team_dict):
     r = requests.get(url_to_load)
     soup = BeautifulSoup(r.text, "html.parser")
 
@@ -185,23 +185,19 @@ def get_team_results(raw_data, team_id):
      "Against_Team", "Against_Score", "Against_First_Downs", "Against_Rushing_Yards",
      "Against_Passing_Yards", "Against_Turnovers"]
 
-    to_return = pandas.DataFrame(columns=cols)
-    to_return[["Year", "Week", "Date"]] = team_specific_results[["Year", "Week", "Date"]]
+    to_return = list()
 
     for index, row in team_specific_results.iterrows():
         if row["Away_Team"] == team_id:
-            to_return.loc[index, "For_Team", "For_Score", "For_First_Downs", "For_Rushing_Yards", "For_Passing_Yards",
-                              "For_Turnovers", "Against_Team", "Against_Score", "Against_First_Downs", "Against_Rushing_Yards",
-                              "Against_Passing_Yards", "Against_Turnovers"] = row[["Away_Team", "Away_Score", "Away_First_Downs", "Away_Rushing_Yards",
+            to_return.append(row[["Year", "Week", "Date", "Away_Team", "Away_Score", "Away_First_Downs", "Away_Rushing_Yards",
                                                                                 "Away_Passing_Yards", "Away_Turnovers", "Home_Team", "Home_Score", "Home_First_Downs", "Home_Rushing_Yards",
-                                                                                "Home_Passing_Yards", "Home_Turnovers"]]
+                                                                                "Home_Passing_Yards", "Home_Turnovers"]].tolist())
         elif row["Home_Team"] == team_id:
-            to_return.loc[index, "For_Team", "For_Score", "For_First_Downs", "For_Rushing_Yards", "For_Passing_Yards",
-                              "For_Turnovers", "Against_Team", "Against_Score", "Against_First_Downs", "Against_Rushing_Yards",
-                              "Against_Passing_Yards", "Against_Turnovers"] = row[["Home_Team", "Home_Score", "Home_First_Downs", "Home_Rushing_Yards",
+            to_return.append(row[["Year", "Week", "Date", "Home_Team", "Home_Score", "Home_First_Downs", "Home_Rushing_Yards",
                                                                                 "Home_Passing_Yards", "Home_Turnovers", "Away_Team", "Away_Score", "Away_First_Downs", "Away_Rushing_Yards",
-                                                                                "Away_Passing_Yards", "Away_Turnovers"]]
-    return to_return
+                                                                                "Away_Passing_Yards", "Away_Turnovers"]].tolist())
+
+    return pandas.DataFrame(to_return, columns=cols)
 
 
 
@@ -237,14 +233,12 @@ feature_df[["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score"]] = 
 
 # Double check on get_team_results function, should be 16 games * len(years)
 for i in range(32):
-    assert get_team_results(raw_data, i ).shape == (16 * len(years), 18)
+    assert get_team_results(raw_data, i ).shape == (16 * len(years), 15)
 
 # Double check on year_slice function, should be 16 games * 32 teams / 2 for duplicates per year
 for i in years:
     assert year_slice(raw_data, int(i), int(i) + 1).shape == (256, 18)
 
-# Start calculating moving averages for each team
-print(get_team_results(raw_data, 0).head())
 
 
 
