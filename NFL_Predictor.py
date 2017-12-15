@@ -180,7 +180,7 @@ def create_feature_df():
 def get_team_results(raw_data, team_id):
     team_specific_results = raw_data.loc[(raw_data["Home_Team"] == team_id) | (raw_data["Away_Team"] == team_id)]
 
-    cols = ["Year", "Week", "Date", "For_Team", "For_Score",
+    cols = ["Week_ID", "Year", "Week", "Date", "For_Team", "For_Score",
      "For_First_Downs", "For_Rushing_Yards", "For_Passing_Yards", "For_Turnovers",
      "Against_Team", "Against_Score", "Against_First_Downs", "Against_Rushing_Yards",
      "Against_Passing_Yards", "Against_Turnovers"]
@@ -189,11 +189,11 @@ def get_team_results(raw_data, team_id):
 
     for index, row in team_specific_results.iterrows():
         if row["Away_Team"] == team_id:
-            to_return.append(row[["Year", "Week", "Date", "Away_Team", "Away_Score", "Away_First_Downs", "Away_Rushing_Yards",
+            to_return.append(row[["Week_ID", "Year", "Week", "Date", "Away_Team", "Away_Score", "Away_First_Downs", "Away_Rushing_Yards",
                                                                                 "Away_Passing_Yards", "Away_Turnovers", "Home_Team", "Home_Score", "Home_First_Downs", "Home_Rushing_Yards",
                                                                                 "Home_Passing_Yards", "Home_Turnovers"]].tolist())
         elif row["Home_Team"] == team_id:
-            to_return.append(row[["Year", "Week", "Date", "Home_Team", "Home_Score", "Home_First_Downs", "Home_Rushing_Yards",
+            to_return.append(row[["Week_ID", "Year", "Week", "Date", "Home_Team", "Home_Score", "Home_First_Downs", "Home_Rushing_Yards",
                                                                                 "Home_Passing_Yards", "Home_Turnovers", "Away_Team", "Away_Score", "Away_First_Downs", "Away_Rushing_Yards",
                                                                                 "Away_Passing_Yards", "Away_Turnovers"]].tolist())
 
@@ -213,6 +213,9 @@ team_dict = create_team_dict()
 # File name for raw results
 raw_results = "results_data_full.csv"
 
+# Rolling average length
+rolling_avg_window = 4
+
 # Initialize years list to pull data for
 years = list(map(str, list(range(2002, 2017))))
 
@@ -228,23 +231,41 @@ raw_data["Week_ID"] = range(raw_data.shape[0])
 feature_df = create_feature_df()
 
 # Initialize feature DataFrame columns
-feature_df[["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score"]] = raw_data[["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score"]]
-#print(feature_df.head())
+feature_df[["Week_ID", "Away_Team", "Away_Score", "Home_Team",
+            "Home_Score", "Favored_Team", "Vegas_Line"]] = raw_data[["Week_ID", "Away_Team", "Away_Score", "Home_Team",
+                                                                     "Home_Score", "Favored_Team", "Vegas_Line"]]
 
 # Double check on get_team_results function, should be 16 games * len(years)
 for i in range(32):
-    assert get_team_results(raw_data, i ).shape == (16 * len(years), 15)
+    assert get_team_results(raw_data, i).shape == (16 * len(years), 16)
 
 # Double check on year_slice function, should be 16 games * 32 teams / 2 for duplicates per year
 for i in years:
     assert year_slice(raw_data, int(i), int(i) + 1).shape == (256, 18)
 
+# Create dictionary holding moving average stats for each team
+team_results_dict = dict()
+for i in range(32):
+    temp_results = get_team_results(raw_data, i)
+    temp_results["For_PPG"] = temp_results["For_Score"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
+    temp_results["For_FD"] = temp_results["For_First_Downs"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
+    temp_results["For_RYPG"] = temp_results["For_Rushing_Yards"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
+    temp_results["For_PYPG"] = temp_results["For_Passing_Yards"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
+    temp_results["For_TO"] = temp_results["For_Turnovers"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
 
+    temp_results["Against_PPG"] = temp_results["Against_Score"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
+    temp_results["Against_FD"] = temp_results["Against_First_Downs"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
+    temp_results["Against_RYPG"] = temp_results["Against_Rushing_Yards"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
+    temp_results["Against_PYPG"] = temp_results["Against_Passing_Yards"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
+    temp_results["Against_TO"] = temp_results["Against_Turnovers"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
+    team_results_dict[i] = temp_results[["Week_ID", "Year", "Week", "Date", "For_Team",
+                                         "For_PPG", "For_FD", "For_RYPG", "For_PYPG", "For_TO",
+                                         "Against_Team", "Against_PPG", "Against_FD", "Against_RYPG", "Against_PYPG", "Against_TO"]]
 
-
-
-
-
+# Check on results for team_results_dict
+for i in range(32):
+    assert team_results_dict[i].shape == (16 * len(years), 16)
+    assert team_results_dict[i].isnull().sum().sum() == ((rolling_avg_window - 1) * 10)
 
 
 
