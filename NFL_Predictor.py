@@ -162,12 +162,13 @@ def __get_team_stats_data(url_to_load, data_to_write, team_dict):
     return data_to_write[:]
 
 # Slice dataframe with the given years, inclusive on begin, exclusive on end
-def slice_date(raw_dataframe, begin_year, end_year):
+def year_slice(raw_dataframe, begin_year, end_year):
     return raw_dataframe[(raw_dataframe["Year"] >= begin_year) & (raw_dataframe["Year"] < end_year)]
 
+# Initialize dataset of features for modeling
 def create_feature_df():
     columns = ["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score",
-               "Away_PPG_ma", "Home_PPG_ma", "Away_PPGA_ma", "Home_PPG_ma",
+               "Away_PPG_ma", "Home_PPG_ma", "Away_PPGA_ma", "Home_PPGA_ma",
                "Away_FD_ma", "Home_FD_ma", "Away_FDA_ma", "Home_FDA_ma",
                "Away_RYPG_ma", "Home_RYPG_ma", "Away_RYPGA_ma", "Home_RYPGA_ma",
                "Away_PYPG_ma", "Home_PYPG_ma", "Away_PYPGA_ma", "Home_PYPGA_ma",
@@ -175,9 +176,32 @@ def create_feature_df():
                "Away_ELO", "Home_ELO", "Away_WR", "Home_WR", "CF_Model_Results", "Vegas_Line"]
     return pandas.DataFrame(columns=columns)
 
+# Return team specific data in an analysis friendly manner - with for-against format vs home-away format
 def get_team_results(raw_data, team_id):
-    return raw_data.loc[(raw_data["Home_Team"] == team_id) | (raw_data["Away_Team"] == team_id)]
+    team_specific_results = raw_data.loc[(raw_data["Home_Team"] == team_id) | (raw_data["Away_Team"] == team_id)]
 
+    cols = ["Year", "Week", "Date", "For_Team", "For_Score",
+     "For_First_Downs", "For_Rushing_Yards", "For_Passing_Yards", "For_Turnovers",
+     "Against_Team", "Against_Score", "Against_First_Downs", "Against_Rushing_Yards",
+     "Against_Passing_Yards", "Against_Turnovers"]
+
+    to_return = pandas.DataFrame(columns=cols)
+    to_return[["Year", "Week", "Date"]] = team_specific_results[["Year", "Week", "Date"]]
+
+    for index, row in team_specific_results.iterrows():
+        if row["Away_Team"] == team_id:
+            to_return.loc[index, "For_Team", "For_Score", "For_First_Downs", "For_Rushing_Yards", "For_Passing_Yards",
+                              "For_Turnovers", "Against_Team", "Against_Score", "Against_First_Downs", "Against_Rushing_Yards",
+                              "Against_Passing_Yards", "Against_Turnovers"] = row[["Away_Team", "Away_Score", "Away_First_Downs", "Away_Rushing_Yards",
+                                                                                "Away_Passing_Yards", "Away_Turnovers", "Home_Team", "Home_Score", "Home_First_Downs", "Home_Rushing_Yards",
+                                                                                "Home_Passing_Yards", "Home_Turnovers"]]
+        elif row["Home_Team"] == team_id:
+            to_return.loc[index, "For_Team", "For_Score", "For_First_Downs", "For_Rushing_Yards", "For_Passing_Yards",
+                              "For_Turnovers", "Against_Team", "Against_Score", "Against_First_Downs", "Against_Rushing_Yards",
+                              "Against_Passing_Yards", "Against_Turnovers"] = row[["Home_Team", "Home_Score", "Home_First_Downs", "Home_Rushing_Yards",
+                                                                                "Home_Passing_Yards", "Home_Turnovers", "Away_Team", "Away_Score", "Away_First_Downs", "Away_Rushing_Yards",
+                                                                                "Away_Passing_Yards", "Away_Turnovers"]]
+    return to_return
 
 
 
@@ -193,8 +217,8 @@ team_dict = create_team_dict()
 # File name for raw results
 raw_results = "results_data_full.csv"
 
-# Pull data from pref.com
-years = str(list(range(2002, 2017)))
+# Initialize years list to pull data for
+years = list(map(str, list(range(2002, 2017))))
 
 # Either crawl web to populate data, or read in .csv containing raw data
 #hf.web_crawler(years, raw_results, team_dict)
@@ -204,17 +228,23 @@ raw_data = pd.read_csv(raw_results)
 raw_data["Week_ID"] = range(raw_data.shape[0])
 #print(raw_data.head())
 
-print(slice_date(raw_data, 2004, 2006).shape)
-
 # Create DataFrame to hold future features
 feature_df = create_feature_df()
 
+# Initialize feature DataFrame columns
 feature_df[["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score"]] = raw_data[["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score"]]
 #print(feature_df.head())
 
+# Double check on get_team_results function, should be 16 games * len(years)
 for i in range(32):
-    print(get_team_results(raw_data, i).shape)
+    assert get_team_results(raw_data, i ).shape == (16 * len(years), 18)
 
+# Double check on year_slice function, should be 16 games * 32 teams / 2 for duplicates per year
+for i in years:
+    assert year_slice(raw_data, int(i), int(i) + 1).shape == (256, 18)
+
+# Start calculating moving averages for each team
+print(get_team_results(raw_data, 0).head())
 
 
 
