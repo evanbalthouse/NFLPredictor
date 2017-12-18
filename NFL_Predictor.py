@@ -217,19 +217,46 @@ def calculate_elo_values(features_df):
             away_elo_prev += y_away
             home_elo_prev += y_home
 
-        m_away = numpy.log(abs(away_score - home_score) + 1) * (2.2 / (0.001 * (away_elo_prev - home_elo_prev) + 2.2))
-        m_home = numpy.log(abs(home_score - away_score) + 1) * (2.2 / (0.001 * (home_elo_prev - away_elo_prev) + 2.2))
+        r_winning = away_elo_prev
+        r_losing = home_elo_prev
+        # If tie, result does not matter, margin of victory multiplier is 0
+        if res == 0:
+            r_winning = home_elo_prev
+            r_losing = away_elo_prev
+
+        mov_mult = numpy.log(abs(away_score - home_score) + 1) * (2.2 / (0.001 * (r_winning - r_losing) + 2.2))
 
         express_away = 1 / (1 + 10 ** ((away_elo_prev - home_elo_prev) / 400))
         express_home = 1 / (1 + 10 ** ((home_elo_prev - away_elo_prev) / 400))
 
-        away_elo_new = away_elo_prev + 20 * m_away * (res - express_away)
-        home_elo_new = home_elo_prev + 20 * m_home * ((1 - res) - express_home)
+        away_elo_new = away_elo_prev + 20 * mov_mult * (res - express_away)
+        home_elo_new = home_elo_prev + 20 * mov_mult * ((1 - res) - express_home)
 
         team_elo_list[away_team].append(away_elo_new)
         team_elo_list[home_team].append(home_elo_new)
     return team_elo_list
 
+# Maps Elo rating grid to away/home team in data format
+def get_away_home_elos(feature_df, elo_dict):
+    away = list()
+    home = list()
+
+    elo_indices = [0] * len(team_dict)
+
+    for index, row in feature_df.iterrows():
+        away_team = row["Away_Team"]
+        home_team = row["Home_Team"]
+
+        away_elo = elo_dict[away_team]
+        home_elo = elo_dict[home_team]
+
+        away.append(away_elo[elo_indices[away_team]])
+        home.append(home_elo[elo_indices[home_team]])
+
+        elo_indices[away_team] += 1
+        elo_indices[home_team] += 1
+
+    return away, home
 
 
 
@@ -322,29 +349,18 @@ for index, row in raw_data.iterrows():
 
 features = pandas.DataFrame(feature_list, columns=feature_columns[:27])
 
-team_elo_dict = list()
-for i in range(len(team_dict)):
-    team_elo_dict.append(list())
-print(raw_data.head())
-
-
-
-def get_away_home_elos(feature_df):
-    away = list()
-    home = list()
-
-    return away, home
-
 team_elo_dict = calculate_elo_values(raw_data)
 
+# Check on the number of values in team_elo_dict - should be one for each game, plus one value for after the final week of data
 for i in range(32):
-    print(team_elo_dict[i])
+    assert len(team_elo_dict[i]) == 16 * len(years) + 1
 
-elo_indices = [0] * len(team_dict)
+# Get list of Elo ratings by away/home team
+away_elo, home_elo = get_away_home_elos(raw_data, team_elo_dict)
 
-
-away_elo, home_elo = get_away_home_elos(raw_data)
-
+features["Away_Elo"] = away_elo
+features["Home_Elo"] = home_elo
+print(features.head())
 
 
 
