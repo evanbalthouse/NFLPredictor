@@ -265,7 +265,17 @@ def get_away_home_elos(feature_df, elo_dict):
 
     return away, home
 
+# Creates simple dataframe of [team_1, team_2, result={0, 0.5, 1}]
+def get_simple_results(raw_data, begin_year, end_year):
+    simple_df = pandas.DataFrame(columns=["For_Team", "Against_Team", "Result"])
 
+    for i in range(len(team_dict)):
+        team_results = get_team_results(raw_data, i)
+        year_data = year_slice(team_results, begin_year, end_year)
+
+        simple_df = simple_df.append(year_data[["For_Team", "Against_Team", "Result"]])
+
+    return simple_df.rename(columns={"For_Team": "team_1", "Against_Team": "team_2", "Result": "pred"})
 
 
 
@@ -280,7 +290,7 @@ raw_results = "results_data_full.csv"
 rolling_avg_window = 4
 
 # Hold the columns for the future feature dataframe
-feature_columns = ["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score", "Favored_Team", "Vegas_Line",
+feature_columns = ["Week_ID", "Year", "Away_Team", "Away_Score", "Home_Team", "Home_Score", "Favored_Team", "Vegas_Line",
                    "Away_PPG_ma", "Away_FD_ma", "Away_RYPG_ma", "Away_PYPG_ma", "Away_TO_ma",
                    "Away_PPGA_ma", "Away_FDA_ma", "Away_RYPGA_ma", "Away_PYPGA_ma", "Away_TOA_ma", "Away_Win_Rate",
                    "Home_PPG_ma", "Home_FD_ma", "Home_RYPG_ma", "Home_PYPG_ma", "Home_TO_ma",
@@ -339,7 +349,7 @@ for i in range(32):
 feature_list = list()
 for index, row in raw_data.iterrows():
     list_to_add = list()
-    list_to_add.extend(row[["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score", "Favored_Team", "Vegas_Line"]])
+    list_to_add.extend(row[["Week_ID", "Year", "Away_Team", "Away_Score", "Home_Team", "Home_Score", "Favored_Team", "Vegas_Line"]])
     away_team_stats = team_results_dict[row["Away_Team"]]
     home_team_stats = team_results_dict[row["Home_Team"]]
 
@@ -356,8 +366,7 @@ for index, row in raw_data.iterrows():
         list_to_add.extend(row)
 
     feature_list.append(list_to_add)
-print(feature_columns)
-print(feature_list[0])
+
 features = pandas.DataFrame(feature_list, columns=feature_columns)
 
 team_elo_dict = calculate_elo_values(raw_data)
@@ -371,13 +380,19 @@ away_elo, home_elo = get_away_home_elos(raw_data, team_elo_dict)
 
 features["Away_Elo"] = away_elo
 features["Home_Elo"] = home_elo
-print(features.tail())
 
+#############################################################################
+# This marks the beginning of using specific years for training and testing #
+#############################################################################
 
+testing_begin = 2003
+testing_end = 2006
 
+training_features = year_slice(features, testing_begin, testing_end + 1)
+testing_features = year_slice(features, testing_end + 1, testing_end + 2)
 
-
-
+full_results = get_simple_results(raw_data, testing_begin, testing_end + 1)
+print(full_results.shape)
 
 
 
