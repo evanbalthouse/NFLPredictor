@@ -8,11 +8,6 @@ import pandas
 import csv
 import numpy
 import matplotlib.pyplot as plt
-from sklearn import cross_validation as cv
-from sklearn.svm import SVC
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn import ensemble
-from sklearn import linear_model
 from keras.layers import Input, Dense, Dropout, Flatten, Embedding, merge
 from keras.regularizers import l2
 from keras.optimizers import Adam
@@ -188,7 +183,52 @@ def get_team_results(raw_data, team_id):
 
     return pandas.DataFrame(to_return, columns=cols)
 
+# Return list of lists with elo ratings per team per game, uses 538's elo rating for NFL games
+def calculate_elo_values(features_df):
+    team_elo_list = list()
 
+    for i in range(len(team_dict)):
+        team_elo = list()
+        team_elo.append(1500)
+        team_elo_list.append(team_elo)
+
+    for index, row in features_df.iterrows():
+        away_team = row["Away_Team"]
+        home_team = row["Home_Team"]
+        away_score = row["Away_Score"]
+        home_score = row["Home_Score"]
+
+        res = 1
+        if away_score < home_score:
+            res = 0
+        elif away_score == home_score:
+            res = 0.5
+
+        away_elo_series = team_elo_list[away_team]
+        home_elo_series = team_elo_list[home_team]
+
+        away_elo_prev = away_elo_series[len(away_elo_series) - 1]
+        home_elo_prev = home_elo_series[len(home_elo_series) - 1]
+
+        if row["Week"] == 1 and row["Year"] != 2002:
+            y_away = 0.5 * (1500 - away_elo_prev)
+            y_home = 0.5 * (1500 - home_elo_prev)
+
+            away_elo_prev += y_away
+            home_elo_prev += y_home
+
+        m_away = numpy.log(abs(away_score - home_score) + 1) * (2.2 / (0.001 * (away_elo_prev - home_elo_prev) + 2.2))
+        m_home = numpy.log(abs(home_score - away_score) + 1) * (2.2 / (0.001 * (home_elo_prev - away_elo_prev) + 2.2))
+
+        express_away = 1 / (1 + 10 ** ((away_elo_prev - home_elo_prev) / 400))
+        express_home = 1 / (1 + 10 ** ((home_elo_prev - away_elo_prev) / 400))
+
+        away_elo_new = away_elo_prev + 20 * m_away * (res - express_away)
+        home_elo_new = home_elo_prev + 20 * m_home * ((1 - res) - express_home)
+
+        team_elo_list[away_team].append(away_elo_new)
+        team_elo_list[home_team].append(home_elo_new)
+    return team_elo_list
 
 
 
@@ -259,7 +299,7 @@ for i in range(32):
     assert team_results_dict[i].isnull().sum().sum() == ((rolling_avg_window - 1) * 10)
 
 #Initialize feature dataframe with moving averages
-feature_df = list()
+feature_list = list()
 for index, row in raw_data.iterrows():
     list_to_add = list()
     list_to_add.extend(row[["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score", "Favored_Team", "Vegas_Line"]])
@@ -278,13 +318,32 @@ for index, row in raw_data.iterrows():
     for index, row in home_stats.iterrows():
         list_to_add.extend(row)
 
-    feature_df.append(list_to_add)
+    feature_list.append(list_to_add)
 
-features = pandas.DataFrame(feature_df, columns=feature_columns[:27])
-print(features.head())
+features = pandas.DataFrame(feature_list, columns=feature_columns[:27])
+
+team_elo_dict = list()
+for i in range(len(team_dict)):
+    team_elo_dict.append(list())
+print(raw_data.head())
 
 
 
+def get_away_home_elos(feature_df):
+    away = list()
+    home = list()
+
+    return away, home
+
+team_elo_dict = calculate_elo_values(raw_data)
+
+for i in range(32):
+    print(team_elo_dict[i])
+
+elo_indices = [0] * len(team_dict)
+
+
+away_elo, home_elo = get_away_home_elos(raw_data)
 
 
 
