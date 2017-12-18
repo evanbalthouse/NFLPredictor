@@ -167,20 +167,27 @@ def get_team_results(raw_data, team_id):
     cols = ["Week_ID", "Year", "Week", "Date", "For_Team", "For_Score",
      "For_First_Downs", "For_Rushing_Yards", "For_Passing_Yards", "For_Turnovers",
      "Against_Team", "Against_Score", "Against_First_Downs", "Against_Rushing_Yards",
-     "Against_Passing_Yards", "Against_Turnovers"]
+     "Against_Passing_Yards", "Against_Turnovers", "Result"]
 
     to_return = list()
 
     for index, row in team_specific_results.iterrows():
         if row["Away_Team"] == team_id:
-            to_return.append(row[["Week_ID", "Year", "Week", "Date", "Away_Team", "Away_Score", "Away_First_Downs", "Away_Rushing_Yards",
+            row_to_append = row[["Week_ID", "Year", "Week", "Date", "Away_Team", "Away_Score", "Away_First_Downs", "Away_Rushing_Yards",
                                                                                 "Away_Passing_Yards", "Away_Turnovers", "Home_Team", "Home_Score", "Home_First_Downs", "Home_Rushing_Yards",
-                                                                                "Home_Passing_Yards", "Home_Turnovers"]].tolist())
-        elif row["Home_Team"] == team_id:
-            to_return.append(row[["Week_ID", "Year", "Week", "Date", "Home_Team", "Home_Score", "Home_First_Downs", "Home_Rushing_Yards",
-                                                                                "Home_Passing_Yards", "Home_Turnovers", "Away_Team", "Away_Score", "Away_First_Downs", "Away_Rushing_Yards",
-                                                                                "Away_Passing_Yards", "Away_Turnovers"]].tolist())
+                                                                                "Home_Passing_Yards", "Home_Turnovers"]].tolist()
 
+        elif row["Home_Team"] == team_id:
+            row_to_append = row[["Week_ID", "Year", "Week", "Date", "Home_Team", "Home_Score", "Home_First_Downs", "Home_Rushing_Yards",
+                                                                                "Home_Passing_Yards", "Home_Turnovers", "Away_Team", "Away_Score", "Away_First_Downs", "Away_Rushing_Yards",
+                                                                                "Away_Passing_Yards", "Away_Turnovers"]].tolist()
+        if row_to_append[5] > row_to_append[11]:
+            row_to_append.append(1)
+        elif row_to_append[5] < row_to_append[11]:
+            row_to_append.append(0)
+        else:
+            row_to_append.append(0.5)
+        to_return.append(row_to_append)
     return pandas.DataFrame(to_return, columns=cols)
 
 # Return list of lists with elo ratings per team per game, uses 538's elo rating for NFL games
@@ -275,10 +282,9 @@ rolling_avg_window = 4
 # Hold the columns for the future feature dataframe
 feature_columns = ["Week_ID", "Away_Team", "Away_Score", "Home_Team", "Home_Score", "Favored_Team", "Vegas_Line",
                    "Away_PPG_ma", "Away_FD_ma", "Away_RYPG_ma", "Away_PYPG_ma", "Away_TO_ma",
-                   "Away_PPGA_ma", "Away_FDA_ma", "Away_RYPGA_ma", "Away_PYPGA_ma", "Away_TOA_ma",
+                   "Away_PPGA_ma", "Away_FDA_ma", "Away_RYPGA_ma", "Away_PYPGA_ma", "Away_TOA_ma", "Away_Win_Rate",
                    "Home_PPG_ma", "Home_FD_ma", "Home_RYPG_ma", "Home_PYPG_ma", "Home_TO_ma",
-                   "Home_PPGA_ma", "Home_FDA_ma", "Home_RYPGA_ma", "Home_PYPGA_ma", "Home_TOA_ma",
-                   "Away_ELO", "Home_ELO", "Away_WR", "Home_WR", "CF_Model_Results", "Vegas_Line"]
+                   "Home_PPGA_ma", "Home_FDA_ma", "Home_RYPGA_ma", "Home_PYPGA_ma", "Home_TOA_ma", "Home_Win_Rate"]
 
 # Initialize years list to pull data for
 years = list(map(str, list(range(2002, 2017))))
@@ -295,7 +301,7 @@ raw_data["Week_ID"] = range(raw_data.shape[0])
 
 # Double check on get_team_results function, should be 16 games * len(years)
 for i in range(32):
-    assert get_team_results(raw_data, i).shape == (16 * len(years), 16)
+    assert get_team_results(raw_data, i).shape == (16 * len(years), 17)
 
 # Double check on year_slice function, should be 16 games * 32 teams / 2 for duplicates per year
 for i in years:
@@ -316,14 +322,18 @@ for i in range(32):
     temp_results["Against_RYPG"] = temp_results["Against_Rushing_Yards"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
     temp_results["Against_PYPG"] = temp_results["Against_Passing_Yards"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
     temp_results["Against_TO"] = temp_results["Against_Turnovers"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
+
+    temp_results["Win_Rate"] = temp_results["Result"].rolling(window=(rolling_avg_window * 2),
+                                                                      min_periods=(rolling_avg_window * 2)).mean()
+
     team_results_dict[i] = temp_results[["Week_ID", "Year", "Week", "Date", "For_Team",
                                          "For_PPG", "For_FD", "For_RYPG", "For_PYPG", "For_TO",
-                                         "Against_Team", "Against_PPG", "Against_FD", "Against_RYPG", "Against_PYPG", "Against_TO"]]
+                                         "Against_Team", "Against_PPG", "Against_FD", "Against_RYPG", "Against_PYPG", "Against_TO", "Win_Rate"]]
 
 # Check on results for team_results_dict
 for i in range(32):
-    assert team_results_dict[i].shape == (16 * len(years), 16)
-    assert team_results_dict[i].isnull().sum().sum() == ((rolling_avg_window - 1) * 10)
+    assert team_results_dict[i].shape == (16 * len(years), 17)
+    assert team_results_dict[i].isnull().sum().sum() == (rolling_avg_window - 1) * 10 + (2 * rolling_avg_window) - 1
 
 #Initialize feature dataframe with moving averages
 feature_list = list()
@@ -335,10 +345,10 @@ for index, row in raw_data.iterrows():
 
     away_stats = away_team_stats.loc[(away_team_stats["Week_ID"] == index), ["For_PPG", "For_FD", "For_RYPG", "For_PYPG", "For_TO",
                                                                           "Against_PPG", "Against_FD", "Against_RYPG",
-                                                                          "Against_PYPG", "Against_TO"]]
+                                                                          "Against_PYPG", "Against_TO", "Win_Rate"]]
     home_stats = home_team_stats.loc[(home_team_stats["Week_ID"] == index), ["For_PPG", "For_FD", "For_RYPG", "For_PYPG", "For_TO",
                                                                           "Against_PPG", "Against_FD", "Against_RYPG",
-                                                                          "Against_PYPG", "Against_TO"]]
+                                                                          "Against_PYPG", "Against_TO", "Win_Rate"]]
 
     for index, row in away_stats.iterrows():
         list_to_add.extend(row)
@@ -346,8 +356,9 @@ for index, row in raw_data.iterrows():
         list_to_add.extend(row)
 
     feature_list.append(list_to_add)
-
-features = pandas.DataFrame(feature_list, columns=feature_columns[:27])
+print(feature_columns)
+print(feature_list[0])
+features = pandas.DataFrame(feature_list, columns=feature_columns)
 
 team_elo_dict = calculate_elo_values(raw_data)
 
@@ -360,7 +371,7 @@ away_elo, home_elo = get_away_home_elos(raw_data, team_elo_dict)
 
 features["Away_Elo"] = away_elo
 features["Home_Elo"] = home_elo
-print(features.head())
+print(features.tail())
 
 
 
