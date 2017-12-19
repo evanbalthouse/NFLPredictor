@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c9469fce-868b-451e-82da-ef3e7872223a" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/NFL_Predictor.py" afterPath="$PROJECT_DIR$/NFL_Predictor.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -17,19 +16,19 @@
       <file leaf-file-name="NFL_Predictor.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/NFL_Predictor.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="391">
-              <caret line="434" column="0" lean-forward="true" selection-start-line="434" selection-start-column="0" selection-end-line="434" selection-end-column="0" />
+            <state relative-caret-position="129">
+              <caret line="429" column="0" lean-forward="true" selection-start-line="429" selection-start-column="0" selection-end-line="429" selection-end-column="0" />
               <folding>
                 <element signature="e#0#28#0" expanded="true" />
-                <element signature="e#437#1763#0" expanded="false" />
-                <element signature="e#1901#4096#0" expanded="false" />
-                <element signature="e#4198#5744#0" expanded="false" />
-                <element signature="e#6128#7933#0" expanded="false" />
-                <element signature="e#8073#9828#0" expanded="false" />
-                <element signature="e#9936#10411#0" expanded="false" />
-                <element signature="e#10540#10965#0" expanded="false" />
-                <element signature="e#11038#11179#0" expanded="false" />
-                <element signature="e#11213#11280#0" expanded="false" />
+                <element signature="e#470#1796#0" expanded="false" />
+                <element signature="e#1934#4129#0" expanded="false" />
+                <element signature="e#4231#5777#0" expanded="false" />
+                <element signature="e#6161#7966#0" expanded="false" />
+                <element signature="e#8106#9861#0" expanded="false" />
+                <element signature="e#9969#10444#0" expanded="false" />
+                <element signature="e#10573#10998#0" expanded="false" />
+                <element signature="e#11071#11212#0" expanded="false" />
+                <element signature="e#11246#11313#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -155,7 +154,7 @@
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1296875" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3292683" sideWeight="0.50208336" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3292683" sideWeight="0.49791667" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3292683" sideWeight="0.49791667" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -188,15 +187,15 @@
           <caret line="270" column="56" lean-forward="false" selection-start-line="270" selection-start-column="56" selection-end-line="270" selection-end-column="56" />
           <folding>
             <element signature="e#0#28#0" expanded="true" />
-            <element signature="e#437#1763#0" expanded="false" />
-            <element signature="e#1901#4096#0" expanded="false" />
-            <element signature="e#4198#5744#0" expanded="false" />
-            <element signature="e#6128#7933#0" expanded="false" />
-            <element signature="e#8073#9828#0" expanded="false" />
-            <element signature="e#9936#10411#0" expanded="false" />
-            <element signature="e#10540#10965#0" expanded="false" />
-            <element signature="e#11038#11179#0" expanded="false" />
-            <element signature="e#11213#11280#0" expanded="false" />
+            <element signature="e#470#1796#0" expanded="false" />
+            <element signature="e#1934#4129#0" expanded="false" />
+            <element signature="e#4231#5777#0" expanded="false" />
+            <element signature="e#6161#7966#0" expanded="false" />
+            <element signature="e#8106#9861#0" expanded="false" />
+            <element signature="e#9969#10444#0" expanded="false" />
+            <element signature="e#10573#10998#0" expanded="false" />
+            <element signature="e#11071#11212#0" expanded="false" />
+            <element signature="e#11246#11313#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -219,19 +218,19 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/NFL_Predictor.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="391">
-          <caret line="434" column="0" lean-forward="true" selection-start-line="434" selection-start-column="0" selection-end-line="434" selection-end-column="0" />
+        <state relative-caret-position="129">
+          <caret line="429" column="0" lean-forward="true" selection-start-line="429" selection-start-column="0" selection-end-line="429" selection-end-column="0" />
           <folding>
             <element signature="e#0#28#0" expanded="true" />
-            <element signature="e#437#1763#0" expanded="false" />
-            <element signature="e#1901#4096#0" expanded="false" />
-            <element signature="e#4198#5744#0" expanded="false" />
-            <element signature="e#6128#7933#0" expanded="false" />
-            <element signature="e#8073#9828#0" expanded="false" />
-            <element signature="e#9936#10411#0" expanded="false" />
-            <element signature="e#10540#10965#0" expanded="false" />
-            <element signature="e#11038#11179#0" expanded="false" />
-            <element signature="e#11213#11280#0" expanded="false" />
+            <element signature="e#470#1796#0" expanded="false" />
+            <element signature="e#1934#4129#0" expanded="false" />
+            <element signature="e#4231#5777#0" expanded="false" />
+            <element signature="e#6161#7966#0" expanded="false" />
+            <element signature="e#8106#9861#0" expanded="false" />
+            <element signature="e#9969#10444#0" expanded="false" />
+            <element signature="e#10573#10998#0" expanded="false" />
+            <element signature="e#11071#11212#0" expanded="false" />
+            <element signature="e#11246#11313#0" expanded="false" />
           </folding>
         </state>
       </provider>

@@ -2,6 +2,7 @@ import HelperFunctions as hf
 import pandas as pd
 import requests
 import re
+from sklearn import linear_model
 from bs4 import BeautifulSoup, Comment
 import requests, re
 import pandas
@@ -396,6 +397,7 @@ features["Home_Elo"] = home_elo
 testing_begin = 2003
 testing_end = 2006
 
+
 training_features = year_slice(features, testing_begin, testing_end + 1)
 testing_features = year_slice(features, testing_end + 1, testing_end + 2)
 
@@ -427,11 +429,29 @@ plt.plot(history.history["loss"])
 plt.show()
 
 training_features["CF_Result"] = model.predict([training_features["Away_Team"], training_features["Home_Team"]])
+training_features["Point_Differential"] = training_features["Away_Team"] - training_features["Home_Team"]
+
 testing_features["CF_Result"] = model.predict([testing_features["Away_Team"], testing_features["Home_Team"]])
+testing_features["Point_Differential"] = testing_features["Away_Team"] - testing_features["Home_Team"]
 
 print(training_features.head())
 print(testing_features.head())
 
+scoring = "mean_squared_error"
+models = []
+models.append(("LR", linear_model.Lasso()))
+models.append(("EN", linear_model.ElasticNet()))
+models.append(("LinR", linear_model.Ridge()))
+models.append(("SVR", linear_model.SGDRegressor()))
+
+results = []
+names = []
+
+for name, model in models:
+    lm = model.fit(training_features[feature_columns[8:33]], training_features["Point_Differential"])
+    predictions = lm.predict(testing_features[feature_columns[8:33]])
+    score = model.score(testing_features[feature_columns[8:33]], testing_features["Point_Differential"])
+    print("%s: %f" % (name, score))
 
 
 
