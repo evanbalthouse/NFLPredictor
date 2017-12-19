@@ -275,8 +275,16 @@ def get_simple_results(raw_data, begin_year, end_year):
 
         simple_df = simple_df.append(year_data[["For_Team", "Against_Team", "Result"]])
 
-    return simple_df.rename(columns={"For_Team": "team_1", "Against_Team": "team_2", "Result": "pred"})
+    return simple_df.rename(columns={"For_Team": "team1", "Against_Team": "team2", "Result": "pred"})
 
+# CF helper functions
+def embedding_input(name, n_in, n_out, reg):
+    inp = Input(shape=(1,), dtype="int64", name=name)
+    return inp, Embedding(n_in, n_out, input_length=1, embeddings_regularizer=l2(reg))(inp)
+
+def create_bias(inp, n_in):
+    x = Embedding(n_in, 1, input_length=1)(inp)
+    return Flatten()(x)
 
 
 
@@ -392,9 +400,37 @@ training_features = year_slice(features, testing_begin, testing_end + 1)
 testing_features = year_slice(features, testing_end + 1, testing_end + 2)
 
 full_results = get_simple_results(raw_data, testing_begin, testing_end + 1)
-print(full_results.shape)
+full_results.index = range(len(full_results.index))
+train = full_results.values
+numpy.random.shuffle(train)
 
+n = 32
+n_factors = 16
 
+team1_in, t1 = embedding_input("team1_in", n, n_factors, 1e-4)
+team2_in, t2 = embedding_input("team2_in", n, n_factors, 1e-4)
+
+b1 = create_bias(team1_in, n)
+b2 = create_bias(team2_in, n)
+
+x = merge([t1, t2], mode="dot")
+x = Flatten()(x)
+x = merge([x, b1], mode="sum")
+x = merge([x, b2], mode="sum")
+x = Dense(1, activation="sigmoid")(x)
+model = Model([team1_in, team2_in], x)
+model.compile(Adam(0.001), loss="binary_crossentropy")
+
+model.summary()
+history = model.fit([train[:, 0], train[:, 1]], train[:, 2], batch_size=64, nb_epoch=20, verbose=2)
+plt.plot(history.history["loss"])
+plt.show()
+
+training_features["CF_Result"] = model.predict([training_features["Away_Team"], training_features["Home_Team"]])
+testing_features["CF_Result"] = model.predict([testing_features["Away_Team"], testing_features["Home_Team"]])
+
+print(training_features.head())
+print(testing_features.head())
 
 
 

@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c9469fce-868b-451e-82da-ef3e7872223a" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/NFL_Predictor.py" afterPath="$PROJECT_DIR$/NFL_Predictor.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -16,8 +17,8 @@
       <file leaf-file-name="NFL_Predictor.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/NFL_Predictor.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="385">
-              <caret line="396" column="0" lean-forward="true" selection-start-line="396" selection-start-column="0" selection-end-line="396" selection-end-column="0" />
+            <state relative-caret-position="391">
+              <caret line="434" column="0" lean-forward="true" selection-start-line="434" selection-start-column="0" selection-end-line="434" selection-end-column="0" />
               <folding>
                 <element signature="e#0#28#0" expanded="true" />
                 <element signature="e#437#1763#0" expanded="false" />
@@ -26,6 +27,9 @@
                 <element signature="e#6128#7933#0" expanded="false" />
                 <element signature="e#8073#9828#0" expanded="false" />
                 <element signature="e#9936#10411#0" expanded="false" />
+                <element signature="e#10540#10965#0" expanded="false" />
+                <element signature="e#11038#11179#0" expanded="false" />
+                <element signature="e#11213#11280#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -34,7 +38,7 @@
       <file leaf-file-name="HelperFunctions.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HelperFunctions.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="238">
+            <state relative-caret-position="1887">
               <caret line="111" column="31" lean-forward="true" selection-start-line="111" selection-start-column="31" selection-end-line="111" selection-end-column="31" />
               <folding />
             </state>
@@ -173,7 +177,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="4" />
+      <option name="time" value="5" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -190,6 +194,9 @@
             <element signature="e#6128#7933#0" expanded="false" />
             <element signature="e#8073#9828#0" expanded="false" />
             <element signature="e#9936#10411#0" expanded="false" />
+            <element signature="e#10540#10965#0" expanded="false" />
+            <element signature="e#11038#11179#0" expanded="false" />
+            <element signature="e#11213#11280#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -204,7 +211,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/HelperFunctions.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="238">
+        <state relative-caret-position="1887">
           <caret line="111" column="31" lean-forward="true" selection-start-line="111" selection-start-column="31" selection-end-line="111" selection-end-column="31" />
           <folding />
         </state>
@@ -212,8 +219,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/NFL_Predictor.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="385">
-          <caret line="396" column="0" lean-forward="true" selection-start-line="396" selection-start-column="0" selection-end-line="396" selection-end-column="0" />
+        <state relative-caret-position="391">
+          <caret line="434" column="0" lean-forward="true" selection-start-line="434" selection-start-column="0" selection-end-line="434" selection-end-column="0" />
           <folding>
             <element signature="e#0#28#0" expanded="true" />
             <element signature="e#437#1763#0" expanded="false" />
@@ -222,6 +229,9 @@
             <element signature="e#6128#7933#0" expanded="false" />
             <element signature="e#8073#9828#0" expanded="false" />
             <element signature="e#9936#10411#0" expanded="false" />
+            <element signature="e#10540#10965#0" expanded="false" />
+            <element signature="e#11038#11179#0" expanded="false" />
+            <element signature="e#11213#11280#0" expanded="false" />
           </folding>
         </state>
       </provider>
