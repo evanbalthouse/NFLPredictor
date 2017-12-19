@@ -1,4 +1,3 @@
-import HelperFunctions as hf
 import pandas as pd
 import requests
 import re
@@ -14,6 +13,7 @@ from keras.regularizers import l2
 from keras.optimizers import Adam
 from keras.models import Model
 pd.options.mode.chained_assignment = None
+
 
 # Creates team id lookup table
 def create_team_dict():
@@ -57,7 +57,7 @@ def create_team_dict():
 # Crawls pref.com for the given years and prints results to a .csv with the given name
 def web_crawler(years, filename, team_dict):
     weeks = []
-    for i in range(3, 4):
+    for i in range(1, 18):
         weeks.append("week_" + str(i))
 
     to_write = list()
@@ -108,6 +108,12 @@ def web_crawler(years, filename, team_dict):
     with open(filename, "w", newline="") as file:
         writer = csv.writer(file)
         writer.writerows(to_write)
+    # Re-order columns - easier to do it this way then re-tool the web scraping code
+    data = pd.read_csv(filename)
+    data = data[["Year", "Week", "Date", "Away_Team", "Away_Score", "Away_First_Downs", "Away_Rushing_Yards", "Away_Passing_Yards", "Away_Turnovers",
+                 "Home_Team", "Home_Score", "Home_First_Downs", "Home_Rushing_Yards", "Home_Passing_Yards", "Home_Turnovers",
+                 "Favored_Team", "Vegas_Line"]]
+    data.to_csv(filename)
 
 
 # Helper function for web_crawler
@@ -348,15 +354,46 @@ def print_results(test_set, pred_set, bet):
         else:
             running_gains -= bet
 
-    print("Num correct: " + str(num_correct) + " out of " + str(len(predictions)) + ", " + str(
-        num_correct / len(predictions)) + "%")
+    print("Num correct: " + str(num_correct) + " out of " + str(len(pred_set)) + ", " + str(
+        num_correct / len(pred_set)) + "%")
     print("On a bet of $" + str(bet) + " per game, winnings of $" + str(running_gains))
+
+
+# Calculate winning percentage and bet winnings for each year in given range
+def performance_by_year(begin_year, end_year, feature_dataset, full_dataset):
+    for i in range(begin_year, end_year):
+        testing_begin = i
+        testing_end = i + 3
+
+        training_features = year_slice(feature_dataset, testing_begin, testing_end + 1)
+        testing_features = year_slice(feature_dataset, testing_end + 1, testing_end + 2)
+
+        full_results = get_simple_results(full_dataset, testing_begin, testing_end + 1)
+
+        model = get_cf_model(full_results)
+
+        training_features.loc[:, "CF_Result"] = model.predict(
+            [training_features["Away_Team"], training_features["Home_Team"]])
+        training_features.loc[:, "Point_Differential"] = (
+        training_features["Away_Score"].copy() - training_features["Home_Score"].copy())
+
+        testing_features.loc[:, "CF_Result"] = model.predict(
+            [testing_features["Away_Team"], testing_features["Home_Team"]])
+        testing_features.loc[:, "Point_Differential"] = (
+        testing_features["Away_Score"].copy() - testing_features["Home_Score"].copy())
+
+        model = linear_model.ElasticNet()
+        lm = model.fit(training_features[feature_columns[8:33]], training_features["Point_Differential"])
+        predictions = lm.predict(testing_features[feature_columns[8:33]])
+
+        print_results(testing_features, predictions, 11)
+
 
 # Create team id lookup
 team_dict = create_team_dict()
 
 # File name for raw results
-raw_results = "results_data_full.csv"
+raw_results = "results_data_full_2017.csv"
 
 # Rolling average length
 rolling_avg_window = 4
@@ -369,12 +406,12 @@ feature_columns = ["Week_ID", "Year", "Away_Team", "Away_Score", "Home_Team", "H
                    "Home_PPGA_ma", "Home_FDA_ma", "Home_RYPGA_ma", "Home_PYPGA_ma", "Home_TOA_ma", "Home_Win_Rate"]
 
 # Initialize years list to pull data for
-years = list(map(str, list(range(2002, 2017))))
+years = list(map(str, list(range(2013, 2018))))
 
 ##########################################################################
 # Either crawl web to populate data, or read in .csv containing raw data #
 ##########################################################################
-#web_crawler(years, raw_results, team_dict)
+web_crawler(years, raw_results, team_dict)
 raw_data = pd.read_csv(raw_results)
 
 # Create week_id column
@@ -456,35 +493,34 @@ features.loc[:, "Home_Elo"] = home_elo
 # This marks the beginning of using specific years for training and testing #
 #############################################################################
 
-for i in range(2003, 2014):
-    testing_begin = i
-    testing_end = i + 3
+# Get train/test results for each test season from 2007-2016
+# performance_by_year(2003, 2013, features, raw_data)
 
-    training_features = year_slice(features, testing_begin, testing_end + 1)
-    testing_features = year_slice(features, testing_end + 1, testing_end + 2)
+training_start_year = 2013
+training_final_year = 2016
+testing_year = 2017
 
-    full_results = get_simple_results(raw_data, testing_begin, testing_end + 1)
+training_features = year_slice(features, training_start_year, training_final_year + 1)
+testing_features = year_slice(features, testing_year, testing_year + 1)
 
-    model = get_cf_model(full_results)
+full_results = get_simple_results(raw_data, training_start_year, training_final_year + 1)
 
-    training_features.loc[:, "CF_Result"] = model.predict([training_features["Away_Team"], training_features["Home_Team"]])
-    training_features.loc[:, "Point_Differential"] = (training_features["Away_Score"].copy() - training_features["Home_Score"].copy())
+model = get_cf_model(full_results)
 
-    testing_features.loc[:, "CF_Result"] = model.predict([testing_features["Away_Team"], testing_features["Home_Team"]])
-    testing_features.loc[:, "Point_Differential"] = (testing_features["Away_Score"].copy() - testing_features["Home_Score"].copy())
+training_features.loc[:, "CF_Result"] = model.predict(
+    [training_features["Away_Team"], training_features["Home_Team"]])
+training_features.loc[:, "Point_Differential"] = (
+    training_features["Away_Score"].copy() - training_features["Home_Score"].copy())
 
-    model = linear_model.ElasticNet()
-    lm = model.fit(training_features[feature_columns[8:33]], training_features["Point_Differential"])
-    predictions = lm.predict(testing_features[feature_columns[8:33]])
+testing_features.loc[:, "CF_Result"] = model.predict(
+    [testing_features["Away_Team"], testing_features["Home_Team"]])
+testing_features.loc[:, "Point_Differential"] = (
+    testing_features["Away_Score"].copy() - testing_features["Home_Score"].copy())
 
-    print_results(testing_features, predictions, 11)
-
-
-
-
-
-
-
+model = linear_model.ElasticNet()
+lm = model.fit(training_features[feature_columns[8:33]], training_features["Point_Differential"])
+predictions = lm.predict(testing_features[feature_columns[8:33]])
+print_results(testing_features, predictions, 11)
 
 
 '''models = []
@@ -503,220 +539,3 @@ for name, model in models:
     predictions = lm.predict(testing_features[feature_columns[8:33]])
     score = model.score(testing_features[feature_columns[8:33]], testing_features["Point_Differential"])
     print("%s: %f" % (name, score))'''
-
-
-
-
-
-
-
-#data_filename = "results_data_test.csv"
-#team_file_stump = directory_stump + "team_data/raw_data_"
-
-#years_array = []
-#for year in range(2011, 2012):
-#    years_array.append(str(year))
-
-#team_dictionary = create_team_dict()
-#create_training_set(years_array, data_filename, team_dictionary)
-
-#results_data = pandas.read_csv(data_filename)
-#game_data = pandas.read_csv(directory_stump + "game_dictionary.csv")
-
-'''stats_indices_home = [6, 8, 10, 12, 14]
-stats_indices_away = [4, 7, 9, 11, 13]
-
-for i in range(0, 32):
-    team_results = pandas.concat([results_data.loc[results_data["Away_Team"] == i], results_data.loc[results_data["Home_Team"] == i]]).sort()
-    moving_avgs = moving_average(team_results, 4, stats_indices_home, stats_indices_away)
-    filename = team_file_stump + str(i) + ".csv"
-    moving_avgs.to_csv(filename, header=True, index_label="Game_Id")'''
-
-#create_game_dictionary(results_data)
-
-'''game_dict = dict()
-with open(directory_stump + "/game_dictionary.csv", mode="r") as myfile:
-    reader = csv.reader(myfile)
-    next(reader, None)
-    game_dict = {int(rows[0]):[rows[1], int(rows[2]), rows[3]] for rows in reader}
-
-for i in range(0, 32):
-    moving_avgs = pandas.read_csv(team_file_stump + str(i) + ".csv")
-    moving_avgs_copy = moving_avgs[:]
-
-    for index, row in moving_avgs.iterrows():
-        if game_dict[row[0]][1] < 4:'''
-
-#write_team_stats(results_data)
-#write_win_rate(team_file_stump)
-#write_elo_values(team_file_stump, results_data)
-
-'''team_elo_dict = list()
-for i in range(0, 32):
-
-    elo_dict = dict()
-    with open(team_file_stump + "elo_" + str(i) + ".csv", mode="r") as infile:
-        reader = csv.reader(infile)
-        next(reader, None)
-        elo_dict = {row[0]:row[14] for row in reader}
-
-    team_elo_dict.append(elo_dict)
-
-away_elo = list()
-home_elo = list()
-
-for index, row in results_data.iterrows():
-    away_elo.append(team_elo_dict[row["Away_Team"]][str(index)])
-    home_elo.append(team_elo_dict[row["Home_Team"]][str(index)])
-
-results_data["Away_Elo"] = away_elo
-results_data["Home_Elo"] = home_elo
-
-#arr = [0,1,2,3,4,5,6,17,18]
-
-#elo_data = results_data.ix[:,arr]
-#elo_data.to_csv(directory_stump + "elo_test.csv", header=True, index_label="Game_Id")
-
-elo_data = pandas.read_csv(directory_stump + "elo_test.csv")
-
-scoring = "mean_squared_error"
-models = []
-models.append(("LR", linear_model.Lasso()))
-models.append(("EN", linear_model.ElasticNet()))
-models.append(("LinR", linear_model.LinearRegression()))
-
-results = []
-names = []
-
-for name, model in models:
-    kfold = cv.KFold(n=elo_data.shape[0], n_folds=10, random_state=7)
-    cv_results = cv.cross_val_score(model, elo_data.ix[:,8:9], elo_data.ix[:,10].values.ravel(), cv=kfold, scoring=scoring)
-    results.append(cv_results)
-    names.append(names)
-    msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
-    print(msg)'''
-
-'''simple_game_results = pandas.read_csv(directory_stump + "game_results_pure.csv")
-simple_game_results = simple_game_results[simple_game_results["Year"] > 2013]
-train_results = simple_game_results[simple_game_results["Year"] < 2016]
-test_results = simple_game_results[simple_game_results["Year"] == 2016]
-
-winner_results_train = pandas.DataFrame()
-winner_results_test = pandas.DataFrame()
-
-winner_results_train[["team1", "team2"]] = train_results[["Winning_Team", "Losing_Team"]].copy()
-winner_results_train["pred"] = 1
-winner_results_test[["team1", "team2"]] = test_results[["Winning_Team", "Losing_Team"]].copy()
-winner_results_test["pred"] = 1
-
-loser_results_train = pandas.DataFrame()
-loser_results_test = pandas.DataFrame()
-
-loser_results_train[["team1", "team2"]] = train_results[["Losing_Team", "Winning_Team"]].copy()
-loser_results_train["pred"] = 0
-loser_results_test[["team1", "team2"]] = test_results[["Losing_Team", "Winning_Team"]].copy()
-loser_results_test["pred"] = 0
-
-train_data = pandas.concat((winner_results_train, loser_results_train), axis=0)
-test_data = pandas.concat((winner_results_test, loser_results_test), axis=0)
-
-n_factors = 75
-n = 32
-
-team1_in, t1 = embedding_input("team1_in", n, n_factors, 1e-4)
-team2_in, t2 = embedding_input("team2_in", n, n_factors, 1e-4)
-
-b1 = create_bias(team1_in, n)
-b2 = create_bias(team2_in, n)
-
-x = merge([t1, t2], mode="dot")
-x = Flatten()(x)
-x = merge([x, b1], mode="sum")
-x = merge([x, b2], mode="sum")
-x = Dense(1, activation="sigmoid")(x)
-model = Model([team1_in, team2_in], x)
-model.compile(Adam(0.001), loss="binary_crossentropy")
-model.summary()
-
-train = train_data.values
-numpy.random.shuffle(train)
-history = model.fit([train[:, 0], train[:, 1]], train[:, 2], batch_size=64, nb_epoch=15, verbose=2)
-plt.plot(history.history["loss"])
-plt.show()
-
-test_data["model_res"] = model.predict([test_data["team1"], test_data["team2"]])
-test_data.to_csv(directory_stump + "CF_results.csv", header=True, index_label="GameId")'''
-
-'''cf_res = pandas.read_csv(directory_stump + "CF_results.csv")
-
-team_elo_dict = list()
-for i in range(0, 32):
-
-    elo_dict = dict()
-    with open(team_file_stump + "elo_" + str(i) + ".csv", mode="r") as infile:
-        reader = csv.reader(infile)
-        next(reader, None)
-        elo_dict = {row[0]:row[14] for row in reader}
-
-    team_elo_dict.append(elo_dict)
-
-away_elo = list()
-home_elo = list()
-
-for index, row in results_data.iterrows():
-    away_elo.append(team_elo_dict[row["Away_Team"]][str(index)])
-    home_elo.append(team_elo_dict[row["Home_Team"]][str(index)])
-
-results_data["Away_Elo"] = away_elo
-results_data["Home_Elo"] = home_elo
-
-arr = [0,1,2,3,4,5,6,17,18]
-
-elo_data = results_data.ix[:,arr]
-
-elo_data = elo_data.ix[3584:,]
-writer = csv.writer(open(directory_stump + "cf_test.csv", "w", newline=""))
-writer.writerow(["GameId", "Home_Team", "Away_Team", "Home_Elo", "Away_Elo", "CF_res", "Home_Margin"])
-
-for index, row in cf_res.iterrows():
-    to_write = list()
-    to_write.append(row["GameId"])
-
-    home_team = elo_data.iloc[index, 5]
-    away_team = elo_data.iloc[index, 3]
-
-    to_write.append(home_team)
-    to_write.append(away_team)
-
-    to_write.append(elo_data.iloc[index, 8])
-    to_write.append(elo_data.iloc[index, 7])
-
-    cf = 0
-    if row["team1"] == home_team:
-        cf = row["model_res"]
-    else:
-        cf = 1 - row["model_res"]
-
-    to_write.append(cf)
-    to_write.append(elo_data.iloc[index, 6] - elo_data.iloc[index, 4])
-    writer.writerow(to_write)'''
-
-
-'''cf_data = pandas.read_csv(directory_stump + "cf_test.csv")
-
-scoring = "neg_mean_squared_error"
-models = []
-models.append(("LR", linear_model.Lasso()))
-models.append(("EN", linear_model.ElasticNet()))
-models.append(("LinR", linear_model.LinearRegression()))
-
-results = []
-names = []
-
-for name, model in models:
-    kfold = cv.KFold(n=cf_data.shape[0], n_folds=10, random_state=7)
-    cv_results = cv.cross_val_score(model, cf_data.ix[:,3:6], cf_data.ix[:,6].values.ravel(), cv=kfold, scoring=scoring)
-    results.append(cv_results)
-    names.append(names)
-    msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
-    print(msg)'''

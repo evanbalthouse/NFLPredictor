@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c9469fce-868b-451e-82da-ef3e7872223a" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/HelperFunctions.py" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/NFL_Predictor.py" afterPath="$PROJECT_DIR$/NFL_Predictor.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -17,32 +17,25 @@
       <file leaf-file-name="NFL_Predictor.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/NFL_Predictor.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-1099">
-              <caret line="57" column="0" lean-forward="false" selection-start-line="57" selection-start-column="0" selection-end-line="57" selection-end-column="0" />
+            <state relative-caret-position="255">
+              <caret line="15" column="0" lean-forward="true" selection-start-line="15" selection-start-column="0" selection-end-line="15" selection-end-column="0" />
               <folding>
-                <element signature="e#0#28#0" expanded="true" />
-                <element signature="e#512#1838#0" expanded="false" />
-                <element signature="e#1977#4173#0" expanded="false" />
-                <element signature="e#4275#5821#0" expanded="false" />
-                <element signature="e#6207#8012#0" expanded="false" />
-                <element signature="e#8153#9908#0" expanded="false" />
-                <element signature="e#10017#10492#0" expanded="false" />
-                <element signature="e#10622#11047#0" expanded="false" />
-                <element signature="e#11121#11262#0" expanded="false" />
-                <element signature="e#11297#11364#0" expanded="false" />
-                <element signature="e#11479#12213#0" expanded="false" />
-                <element signature="e#12296#13119#0" expanded="false" />
+                <element signature="e#0#19#0" expanded="true" />
+                <element signature="e#484#1810#0" expanded="false" />
+                <element signature="e#1949#4611#0" expanded="false" />
+                <element signature="e#4716#6262#0" expanded="false" />
+                <element signature="e#6648#8453#0" expanded="false" />
+                <element signature="e#8594#10349#0" expanded="false" />
+                <element signature="e#10458#10933#0" expanded="false" />
+                <element signature="e#11063#11488#0" expanded="false" />
+                <element signature="e#11562#11703#0" expanded="false" />
+                <element signature="e#11738#11805#0" expanded="false" />
+                <element signature="e#11920#12654#0" expanded="false" />
+                <element signature="e#12737#13554#0" expanded="false" />
+                <element signature="e#16684#18662#0" expanded="false" />
+                <element signature="e#18729#18904#0" expanded="false" />
+                <element signature="e#19022#20221#0" expanded="false" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="HelperFunctions.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/HelperFunctions.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1887">
-              <caret line="111" column="31" lean-forward="true" selection-start-line="111" selection-start-column="31" selection-end-line="111" selection-end-column="31" />
-              <folding />
             </state>
           </provider>
         </entry>
@@ -179,7 +172,7 @@
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
-      <option name="time" value="5" />
+      <option name="time" value="6" />
     </breakpoint-manager>
     <watches-manager />
   </component>
@@ -189,18 +182,21 @@
         <state relative-caret-position="2312">
           <caret line="270" column="56" lean-forward="false" selection-start-line="270" selection-start-column="56" selection-end-line="270" selection-end-column="56" />
           <folding>
-            <element signature="e#0#28#0" expanded="true" />
-            <element signature="e#512#1838#0" expanded="false" />
-            <element signature="e#1977#4173#0" expanded="false" />
-            <element signature="e#4275#5821#0" expanded="false" />
-            <element signature="e#6207#8012#0" expanded="false" />
-            <element signature="e#8153#9908#0" expanded="false" />
-            <element signature="e#10017#10492#0" expanded="false" />
-            <element signature="e#10622#11047#0" expanded="false" />
-            <element signature="e#11121#11262#0" expanded="false" />
-            <element signature="e#11297#11364#0" expanded="false" />
-            <element signature="e#11479#12213#0" expanded="false" />
-            <element signature="e#12296#13119#0" expanded="false" />
+            <element signature="e#0#19#0" expanded="true" />
+            <element signature="e#484#1810#0" expanded="false" />
+            <element signature="e#1949#4611#0" expanded="false" />
+            <element signature="e#4716#6262#0" expanded="false" />
+            <element signature="e#6648#8453#0" expanded="false" />
+            <element signature="e#8594#10349#0" expanded="false" />
+            <element signature="e#10458#10933#0" expanded="false" />
+            <element signature="e#11063#11488#0" expanded="false" />
+            <element signature="e#11562#11703#0" expanded="false" />
+            <element signature="e#11738#11805#0" expanded="false" />
+            <element signature="e#11920#12654#0" expanded="false" />
+            <element signature="e#12737#13554#0" expanded="false" />
+            <element signature="e#16684#18662#0" expanded="false" />
+            <element signature="e#18729#18904#0" expanded="false" />
+            <element signature="e#19022#20221#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -223,29 +219,32 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/HelperFunctions.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1887">
-          <caret line="111" column="31" lean-forward="true" selection-start-line="111" selection-start-column="31" selection-end-line="111" selection-end-column="31" />
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/NFL_Predictor.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-1099">
-          <caret line="57" column="0" lean-forward="false" selection-start-line="57" selection-start-column="0" selection-end-line="57" selection-end-column="0" />
+        <state relative-caret-position="255">
+          <caret line="15" column="0" lean-forward="true" selection-start-line="15" selection-start-column="0" selection-end-line="15" selection-end-column="0" />
           <folding>
-            <element signature="e#0#28#0" expanded="true" />
-            <element signature="e#512#1838#0" expanded="false" />
-            <element signature="e#1977#4173#0" expanded="false" />
-            <element signature="e#4275#5821#0" expanded="false" />
-            <element signature="e#6207#8012#0" expanded="false" />
-            <element signature="e#8153#9908#0" expanded="false" />
-            <element signature="e#10017#10492#0" expanded="false" />
-            <element signature="e#10622#11047#0" expanded="false" />
-            <element signature="e#11121#11262#0" expanded="false" />
-            <element signature="e#11297#11364#0" expanded="false" />
-            <element signature="e#11479#12213#0" expanded="false" />
-            <element signature="e#12296#13119#0" expanded="false" />
+            <element signature="e#0#19#0" expanded="true" />
+            <element signature="e#484#1810#0" expanded="false" />
+            <element signature="e#1949#4611#0" expanded="false" />
+            <element signature="e#4716#6262#0" expanded="false" />
+            <element signature="e#6648#8453#0" expanded="false" />
+            <element signature="e#8594#10349#0" expanded="false" />
+            <element signature="e#10458#10933#0" expanded="false" />
+            <element signature="e#11063#11488#0" expanded="false" />
+            <element signature="e#11562#11703#0" expanded="false" />
+            <element signature="e#11738#11805#0" expanded="false" />
+            <element signature="e#11920#12654#0" expanded="false" />
+            <element signature="e#12737#13554#0" expanded="false" />
+            <element signature="e#16684#18662#0" expanded="false" />
+            <element signature="e#18729#18904#0" expanded="false" />
+            <element signature="e#19022#20221#0" expanded="false" />
           </folding>
         </state>
       </provider>
