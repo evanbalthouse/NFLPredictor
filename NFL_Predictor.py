@@ -13,6 +13,7 @@ from keras.layers import Input, Dense, Dropout, Flatten, Embedding, merge
 from keras.regularizers import l2
 from keras.optimizers import Adam
 from keras.models import Model
+pd.options.mode.chained_assignment = None
 
 # Creates team id lookup table
 def create_team_dict():
@@ -51,6 +52,7 @@ def create_team_dict():
     team_dict["San Francisco 49ers"] = 31
     team_dict["St. Louis Rams"] = 30
     return team_dict;
+
 
 # Crawls pref.com for the given years and prints results to a .csv with the given name
 def web_crawler(years, filename, team_dict):
@@ -107,6 +109,7 @@ def web_crawler(years, filename, team_dict):
         writer = csv.writer(file)
         writer.writerows(to_write)
 
+
 # Helper function for web_crawler
 def get_team_stats_data(url_to_load, data_to_write, team_dict):
     r = requests.get(url_to_load)
@@ -157,9 +160,11 @@ def get_team_stats_data(url_to_load, data_to_write, team_dict):
         data_to_write.append(0)
     return data_to_write[:]
 
+
 # Slice dataframe with the given years, inclusive on begin, exclusive on end
 def year_slice(raw_dataframe, begin_year, end_year):
     return raw_dataframe[(raw_dataframe["Year"] >= begin_year) & (raw_dataframe["Year"] < end_year)]
+
 
 # Return team specific data in an analysis friendly manner - with for-against format vs home-away format
 def get_team_results(raw_data, team_id):
@@ -190,6 +195,7 @@ def get_team_results(raw_data, team_id):
             row_to_append.append(0.5)
         to_return.append(row_to_append)
     return pandas.DataFrame(to_return, columns=cols)
+
 
 # Return list of lists with elo ratings per team per game, uses 538's elo rating for NFL games
 def calculate_elo_values(features_df):
@@ -244,6 +250,7 @@ def calculate_elo_values(features_df):
         team_elo_list[home_team].append(home_elo_new)
     return team_elo_list
 
+
 # Maps Elo rating grid to away/home team in data format
 def get_away_home_elos(feature_df, elo_dict):
     away = list()
@@ -266,6 +273,7 @@ def get_away_home_elos(feature_df, elo_dict):
 
     return away, home
 
+
 # Creates simple dataframe of [team_1, team_2, result={0, 0.5, 1}]
 def get_simple_results(raw_data, begin_year, end_year):
     simple_df = pandas.DataFrame(columns=["For_Team", "Against_Team", "Result"])
@@ -278,16 +286,71 @@ def get_simple_results(raw_data, begin_year, end_year):
 
     return simple_df.rename(columns={"For_Team": "team1", "Against_Team": "team2", "Result": "pred"})
 
+
 # CF helper functions
 def embedding_input(name, n_in, n_out, reg):
     inp = Input(shape=(1,), dtype="int64", name=name)
     return inp, Embedding(n_in, n_out, input_length=1, embeddings_regularizer=l2(reg))(inp)
+
 
 def create_bias(inp, n_in):
     x = Embedding(n_in, 1, input_length=1)(inp)
     return Flatten()(x)
 
 
+# Create CF Model from pure game results [team1, team2, result={0, 0.5, 1}]
+def get_cf_model(pure_results):
+    pure_results.index = range(len(pure_results.index))
+    train = pure_results.values
+    numpy.random.shuffle(train)
+
+    n = 32
+    n_factors = 16
+
+    team1_in, t1 = embedding_input("team1_in", n, n_factors, 1e-4)
+    team2_in, t2 = embedding_input("team2_in", n, n_factors, 1e-4)
+
+    b1 = create_bias(team1_in, n)
+    b2 = create_bias(team2_in, n)
+
+    x = merge([t1, t2], mode="dot")
+    x = Flatten()(x)
+    x = merge([x, b1], mode="sum")
+    x = merge([x, b2], mode="sum")
+    x = Dense(1, activation="sigmoid")(x)
+    model = Model([team1_in, team2_in], x)
+    model.compile(Adam(0.001), loss="binary_crossentropy")
+
+    model.fit([train[:, 0], train[:, 1]], train[:, 2], batch_size=64, nb_epoch=20, verbose=0)
+    return model
+
+
+# Print out results in test set
+def print_results(test_set, pred_set, bet):
+    num_correct = 0
+    running_gains = 0
+    bet = 11
+
+    test_set.index = range(len(test_set.index))
+
+    for index, row in test_set.iterrows():
+        fav_team = row["Favored_Team"]
+        v_line = row["Vegas_Line"]
+
+        if fav_team == row["Away_Team"]:
+            v_line *= -1
+
+        pred_value = pred_set[index]
+        truth = row["Point_Differential"]
+        if ((pred_value > v_line) and (truth > v_line)) or (((pred_value < v_line) and (truth < v_line))):
+            running_gains += bet * 0.909091
+            num_correct += 1
+        else:
+            running_gains -= bet
+
+    print("Num correct: " + str(num_correct) + " out of " + str(len(predictions)) + ", " + str(
+        num_correct / len(predictions)) + "%")
+    print("On a bet of $" + str(bet) + " per game, winnings of $" + str(running_gains))
 
 # Create team id lookup
 team_dict = create_team_dict()
@@ -311,12 +374,11 @@ years = list(map(str, list(range(2002, 2017))))
 ##########################################################################
 # Either crawl web to populate data, or read in .csv containing raw data #
 ##########################################################################
-#hf.web_crawler(years, raw_results, team_dict)
+#web_crawler(years, raw_results, team_dict)
 raw_data = pd.read_csv(raw_results)
 
 # Create week_id column
 raw_data["Week_ID"] = range(raw_data.shape[0])
-#print(raw_data.head())
 
 # Double check on get_team_results function, should be 16 games * len(years)
 for i in range(32):
@@ -387,62 +449,51 @@ for i in range(32):
 # Get list of Elo ratings by away/home team
 away_elo, home_elo = get_away_home_elos(raw_data, team_elo_dict)
 
-features["Away_Elo"] = away_elo
-features["Home_Elo"] = home_elo
+features.loc[:, "Away_Elo"] = away_elo
+features.loc[:, "Home_Elo"] = home_elo
 
 #############################################################################
 # This marks the beginning of using specific years for training and testing #
 #############################################################################
 
-testing_begin = 2003
-testing_end = 2006
+for i in range(2003, 2014):
+    testing_begin = i
+    testing_end = i + 3
+
+    training_features = year_slice(features, testing_begin, testing_end + 1)
+    testing_features = year_slice(features, testing_end + 1, testing_end + 2)
+
+    full_results = get_simple_results(raw_data, testing_begin, testing_end + 1)
+
+    model = get_cf_model(full_results)
+
+    training_features.loc[:, "CF_Result"] = model.predict([training_features["Away_Team"], training_features["Home_Team"]])
+    training_features.loc[:, "Point_Differential"] = (training_features["Away_Score"].copy() - training_features["Home_Score"].copy())
+
+    testing_features.loc[:, "CF_Result"] = model.predict([testing_features["Away_Team"], testing_features["Home_Team"]])
+    testing_features.loc[:, "Point_Differential"] = (testing_features["Away_Score"].copy() - testing_features["Home_Score"].copy())
+
+    model = linear_model.ElasticNet()
+    lm = model.fit(training_features[feature_columns[8:33]], training_features["Point_Differential"])
+    predictions = lm.predict(testing_features[feature_columns[8:33]])
+
+    print_results(testing_features, predictions, 11)
 
 
-training_features = year_slice(features, testing_begin, testing_end + 1)
-testing_features = year_slice(features, testing_end + 1, testing_end + 2)
 
-full_results = get_simple_results(raw_data, testing_begin, testing_end + 1)
-full_results.index = range(len(full_results.index))
-train = full_results.values
-numpy.random.shuffle(train)
 
-n = 32
-n_factors = 16
 
-team1_in, t1 = embedding_input("team1_in", n, n_factors, 1e-4)
-team2_in, t2 = embedding_input("team2_in", n, n_factors, 1e-4)
 
-b1 = create_bias(team1_in, n)
-b2 = create_bias(team2_in, n)
 
-x = merge([t1, t2], mode="dot")
-x = Flatten()(x)
-x = merge([x, b1], mode="sum")
-x = merge([x, b2], mode="sum")
-x = Dense(1, activation="sigmoid")(x)
-model = Model([team1_in, team2_in], x)
-model.compile(Adam(0.001), loss="binary_crossentropy")
 
-model.summary()
-history = model.fit([train[:, 0], train[:, 1]], train[:, 2], batch_size=64, nb_epoch=20, verbose=2)
-plt.plot(history.history["loss"])
-plt.show()
 
-training_features["CF_Result"] = model.predict([training_features["Away_Team"], training_features["Home_Team"]])
-training_features["Point_Differential"] = training_features["Away_Team"] - training_features["Home_Team"]
-
-testing_features["CF_Result"] = model.predict([testing_features["Away_Team"], testing_features["Home_Team"]])
-testing_features["Point_Differential"] = testing_features["Away_Team"] - testing_features["Home_Team"]
-
-print(training_features.head())
-print(testing_features.head())
-
-scoring = "mean_squared_error"
-models = []
+'''models = []
 models.append(("LR", linear_model.Lasso()))
 models.append(("EN", linear_model.ElasticNet()))
-models.append(("LinR", linear_model.Ridge()))
-models.append(("SVR", linear_model.SGDRegressor()))
+models.append(("BR", linear_model.BayesianRidge()))
+models.append(("ARD", linear_model.ARDRegression()))
+models.append(("Ridge", linear_model.Ridge()))
+models.append(("Linear", linear_model.LinearRegression()))
 
 results = []
 names = []
@@ -451,7 +502,7 @@ for name, model in models:
     lm = model.fit(training_features[feature_columns[8:33]], training_features["Point_Differential"])
     predictions = lm.predict(testing_features[feature_columns[8:33]])
     score = model.score(testing_features[feature_columns[8:33]], testing_features["Point_Differential"])
-    print("%s: %f" % (name, score))
+    print("%s: %f" % (name, score))'''
 
 
 
