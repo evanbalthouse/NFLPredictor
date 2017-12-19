@@ -2,6 +2,10 @@ import pandas as pd
 import requests
 import re
 from sklearn import linear_model
+from sklearn.linear_model.stochastic_gradient import SGDRegressor
+from sklearn import svm
+from sklearn.neural_network import MLPRegressor
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from bs4 import BeautifulSoup, Comment
 import requests, re
 import pandas
@@ -360,7 +364,7 @@ def print_results(test_set, pred_set, bet):
 
 
 # Calculate winning percentage and bet winnings for each year in given range
-def performance_by_year(begin_year, end_year, feature_dataset, full_dataset):
+def performance_by_year(begin_year, end_year, feature_dataset, full_dataset, feature_columns):
     for i in range(begin_year, end_year):
         testing_begin = i
         testing_end = i + 3
@@ -382,7 +386,7 @@ def performance_by_year(begin_year, end_year, feature_dataset, full_dataset):
         testing_features.loc[:, "Point_Differential"] = (
         testing_features["Away_Score"].copy() - testing_features["Home_Score"].copy())
 
-        model = linear_model.ElasticNet()
+        model = linear_model.BayesianRidge()
         lm = model.fit(training_features[feature_columns[8:33]], training_features["Point_Differential"])
         predictions = lm.predict(testing_features[feature_columns[8:33]])
 
@@ -393,25 +397,26 @@ def performance_by_year(begin_year, end_year, feature_dataset, full_dataset):
 team_dict = create_team_dict()
 
 # File name for raw results
-raw_results = "results_data_full_2017.csv"
+raw_results = "results_data_full.csv"
 
 # Rolling average length
-rolling_avg_window = 4
+rolling_avg_window = 3
 
 # Hold the columns for the future feature dataframe
 feature_columns = ["Week_ID", "Year", "Away_Team", "Away_Score", "Home_Team", "Home_Score", "Favored_Team", "Vegas_Line",
                    "Away_PPG_ma", "Away_FD_ma", "Away_RYPG_ma", "Away_PYPG_ma", "Away_TO_ma",
                    "Away_PPGA_ma", "Away_FDA_ma", "Away_RYPGA_ma", "Away_PYPGA_ma", "Away_TOA_ma", "Away_Win_Rate",
                    "Home_PPG_ma", "Home_FD_ma", "Home_RYPG_ma", "Home_PYPG_ma", "Home_TO_ma",
-                   "Home_PPGA_ma", "Home_FDA_ma", "Home_RYPGA_ma", "Home_PYPGA_ma", "Home_TOA_ma", "Home_Win_Rate"]
+                   "Home_PPGA_ma", "Home_FDA_ma", "Home_RYPGA_ma", "Home_PYPGA_ma", "Home_TOA_ma", "Home_Win_Rate",
+                   "Away_Elo", "Home_Elo", "CF_Result"]
 
 # Initialize years list to pull data for
-years = list(map(str, list(range(2013, 2018))))
+years = list(map(str, list(range(2002, 2017))))
 
 ##########################################################################
 # Either crawl web to populate data, or read in .csv containing raw data #
 ##########################################################################
-web_crawler(years, raw_results, team_dict)
+#web_crawler(years, raw_results, team_dict)
 raw_data = pd.read_csv(raw_results)
 
 # Create week_id column
@@ -429,29 +434,29 @@ for i in years:
 team_results_dict = dict()
 for i in range(32):
     temp_results = get_team_results(raw_data, i)
-    temp_results["For_PPG"] = temp_results["For_Score"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
-    temp_results["For_FD"] = temp_results["For_First_Downs"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
-    temp_results["For_RYPG"] = temp_results["For_Rushing_Yards"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
-    temp_results["For_PYPG"] = temp_results["For_Passing_Yards"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
-    temp_results["For_TO"] = temp_results["For_Turnovers"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
+    temp_results["For_PPG"] = temp_results["For_Score"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean().shift(1)
+    temp_results["For_FD"] = temp_results["For_First_Downs"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean().shift(1)
+    temp_results["For_RYPG"] = temp_results["For_Rushing_Yards"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean().shift(1)
+    temp_results["For_PYPG"] = temp_results["For_Passing_Yards"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean().shift(1)
+    temp_results["For_TO"] = temp_results["For_Turnovers"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean().shift(1)
 
-    temp_results["Against_PPG"] = temp_results["Against_Score"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
-    temp_results["Against_FD"] = temp_results["Against_First_Downs"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
-    temp_results["Against_RYPG"] = temp_results["Against_Rushing_Yards"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
-    temp_results["Against_PYPG"] = temp_results["Against_Passing_Yards"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
-    temp_results["Against_TO"] = temp_results["Against_Turnovers"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean()
+    temp_results["Against_PPG"] = temp_results["Against_Score"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean().shift(1)
+    temp_results["Against_FD"] = temp_results["Against_First_Downs"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean().shift(1)
+    temp_results["Against_RYPG"] = temp_results["Against_Rushing_Yards"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean().shift(1)
+    temp_results["Against_PYPG"] = temp_results["Against_Passing_Yards"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean().shift(1)
+    temp_results["Against_TO"] = temp_results["Against_Turnovers"].rolling(window=rolling_avg_window, min_periods=rolling_avg_window).mean().shift(1)
 
     temp_results["Win_Rate"] = temp_results["Result"].rolling(window=(rolling_avg_window * 2),
-                                                                      min_periods=(rolling_avg_window * 2)).mean()
+                                                                      min_periods=(rolling_avg_window * 2)).mean().shift(1)
 
     team_results_dict[i] = temp_results[["Week_ID", "Year", "Week", "Date", "For_Team",
                                          "For_PPG", "For_FD", "For_RYPG", "For_PYPG", "For_TO",
                                          "Against_Team", "Against_PPG", "Against_FD", "Against_RYPG", "Against_PYPG", "Against_TO", "Win_Rate"]]
-
+#print(team_results_dict[0].head())
 # Check on results for team_results_dict
 for i in range(32):
     assert team_results_dict[i].shape == (16 * len(years), 17)
-    assert team_results_dict[i].isnull().sum().sum() == (rolling_avg_window - 1) * 10 + (2 * rolling_avg_window) - 1
+    assert team_results_dict[i].isnull().sum().sum() == (rolling_avg_window) * 10 + (2 * rolling_avg_window)
 
 #Initialize feature dataframe with moving averages
 feature_list = list()
@@ -475,7 +480,7 @@ for index, row in raw_data.iterrows():
 
     feature_list.append(list_to_add)
 
-features = pandas.DataFrame(feature_list, columns=feature_columns)
+features = pandas.DataFrame(feature_list, columns=feature_columns[:30])
 
 team_elo_dict = calculate_elo_values(raw_data)
 
@@ -494,16 +499,16 @@ features.loc[:, "Home_Elo"] = home_elo
 #############################################################################
 
 # Get train/test results for each test season from 2007-2016
-# performance_by_year(2003, 2013, features, raw_data)
+#performance_by_year(2003, 2013, features, raw_data, feature_columns)
 
-training_start_year = 2013
-training_final_year = 2016
-testing_year = 2017
+training_start_year = 2003
+training_final_year = 2006
+testing_year = 2007
 
 training_features = year_slice(features, training_start_year, training_final_year + 1)
 testing_features = year_slice(features, testing_year, testing_year + 1)
 
-full_results = get_simple_results(raw_data, training_start_year, training_final_year + 1)
+full_results = get_simple_results(raw_data, 2005, training_final_year + 1)
 
 model = get_cf_model(full_results)
 
@@ -517,25 +522,38 @@ testing_features.loc[:, "CF_Result"] = model.predict(
 testing_features.loc[:, "Point_Differential"] = (
     testing_features["Away_Score"].copy() - testing_features["Home_Score"].copy())
 
-model = linear_model.ElasticNet()
+'''model = linear_model.ElasticNet()
 lm = model.fit(training_features[feature_columns[8:33]], training_features["Point_Differential"])
 predictions = lm.predict(testing_features[feature_columns[8:33]])
-print_results(testing_features, predictions, 11)
+print_results(testing_features, predictions, 11)'''
 
 
-'''models = []
+models = []
 models.append(("LR", linear_model.Lasso()))
 models.append(("EN", linear_model.ElasticNet()))
 models.append(("BR", linear_model.BayesianRidge()))
 models.append(("ARD", linear_model.ARDRegression()))
 models.append(("Ridge", linear_model.Ridge()))
 models.append(("Linear", linear_model.LinearRegression()))
+models.append(("SVM", svm.SVR()))
+models.append(("SGD", SGDRegressor()))
+models.append(("NN", MLPRegressor()))
+models.append(("RF", RandomForestRegressor()))
+models.append(("GBR", GradientBoostingRegressor()))
 
 results = []
 names = []
 
+from sklearn import preprocessing
+
+min_max_scaler = preprocessing.MinMaxScaler()
+transformed_training = min_max_scaler.fit_transform(training_features[feature_columns[8:33]])
+transformed_testing = min_max_scaler.transform(testing_features[feature_columns[8:33]])
+
 for name, model in models:
-    lm = model.fit(training_features[feature_columns[8:33]], training_features["Point_Differential"])
-    predictions = lm.predict(testing_features[feature_columns[8:33]])
-    score = model.score(testing_features[feature_columns[8:33]], testing_features["Point_Differential"])
-    print("%s: %f" % (name, score))'''
+    lm = model.fit(transformed_training, training_features["Point_Differential"])
+    predictions = lm.predict(transformed_testing)
+    mse = numpy.mean((predictions - testing_features["Point_Differential"] ** 2))
+
+    score = model.score(transformed_testing, testing_features["Point_Differential"])
+    print("%s: %f %f" % (name, score, mse))

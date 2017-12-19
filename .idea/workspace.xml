@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c9469fce-868b-451e-82da-ef3e7872223a" name="Default" comment="">
-      <change type="DELETED" beforePath="$PROJECT_DIR$/HelperFunctions.py" afterPath="" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/NFL_Predictor.py" afterPath="$PROJECT_DIR$/NFL_Predictor.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -17,24 +16,22 @@
       <file leaf-file-name="NFL_Predictor.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/NFL_Predictor.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="255">
-              <caret line="15" column="0" lean-forward="true" selection-start-line="15" selection-start-column="0" selection-end-line="15" selection-end-column="0" />
+            <state relative-caret-position="510">
+              <caret line="542" column="0" lean-forward="true" selection-start-line="542" selection-start-column="0" selection-end-line="542" selection-end-column="0" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
-                <element signature="e#484#1810#0" expanded="false" />
-                <element signature="e#1949#4611#0" expanded="false" />
-                <element signature="e#4716#6262#0" expanded="false" />
-                <element signature="e#6648#8453#0" expanded="false" />
-                <element signature="e#8594#10349#0" expanded="false" />
-                <element signature="e#10458#10933#0" expanded="false" />
-                <element signature="e#11063#11488#0" expanded="false" />
-                <element signature="e#11562#11703#0" expanded="false" />
-                <element signature="e#11738#11805#0" expanded="false" />
-                <element signature="e#11920#12654#0" expanded="false" />
-                <element signature="e#12737#13554#0" expanded="false" />
-                <element signature="e#16684#18662#0" expanded="false" />
-                <element signature="e#18729#18904#0" expanded="false" />
-                <element signature="e#19022#20221#0" expanded="false" />
+                <element signature="e#700#2026#0" expanded="false" />
+                <element signature="e#2165#4827#0" expanded="false" />
+                <element signature="e#4932#6478#0" expanded="false" />
+                <element signature="e#6615#6711#0" expanded="false" />
+                <element signature="e#6864#8669#0" expanded="false" />
+                <element signature="e#8810#10565#0" expanded="false" />
+                <element signature="e#10674#11149#0" expanded="false" />
+                <element signature="e#11279#11704#0" expanded="false" />
+                <element signature="e#11778#11919#0" expanded="false" />
+                <element signature="e#11954#12021#0" expanded="false" />
+                <element signature="e#12953#13770#0" expanded="false" />
+                <element signature="e#13949#15212#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -183,20 +180,18 @@
           <caret line="270" column="56" lean-forward="false" selection-start-line="270" selection-start-column="56" selection-end-line="270" selection-end-column="56" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
-            <element signature="e#484#1810#0" expanded="false" />
-            <element signature="e#1949#4611#0" expanded="false" />
-            <element signature="e#4716#6262#0" expanded="false" />
-            <element signature="e#6648#8453#0" expanded="false" />
-            <element signature="e#8594#10349#0" expanded="false" />
-            <element signature="e#10458#10933#0" expanded="false" />
-            <element signature="e#11063#11488#0" expanded="false" />
-            <element signature="e#11562#11703#0" expanded="false" />
-            <element signature="e#11738#11805#0" expanded="false" />
-            <element signature="e#11920#12654#0" expanded="false" />
-            <element signature="e#12737#13554#0" expanded="false" />
-            <element signature="e#16684#18662#0" expanded="false" />
-            <element signature="e#18729#18904#0" expanded="false" />
-            <element signature="e#19022#20221#0" expanded="false" />
+            <element signature="e#700#2026#0" expanded="false" />
+            <element signature="e#2165#4827#0" expanded="false" />
+            <element signature="e#4932#6478#0" expanded="false" />
+            <element signature="e#6615#6711#0" expanded="false" />
+            <element signature="e#6864#8669#0" expanded="false" />
+            <element signature="e#8810#10565#0" expanded="false" />
+            <element signature="e#10674#11149#0" expanded="false" />
+            <element signature="e#11279#11704#0" expanded="false" />
+            <element signature="e#11778#11919#0" expanded="false" />
+            <element signature="e#11954#12021#0" expanded="false" />
+            <element signature="e#12953#13770#0" expanded="false" />
+            <element signature="e#13949#15212#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -227,24 +222,22 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/NFL_Predictor.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="15" column="0" lean-forward="true" selection-start-line="15" selection-start-column="0" selection-end-line="15" selection-end-column="0" />
+        <state relative-caret-position="510">
+          <caret line="542" column="0" lean-forward="true" selection-start-line="542" selection-start-column="0" selection-end-line="542" selection-end-column="0" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
-            <element signature="e#484#1810#0" expanded="false" />
-            <element signature="e#1949#4611#0" expanded="false" />
-            <element signature="e#4716#6262#0" expanded="false" />
-            <element signature="e#6648#8453#0" expanded="false" />
-            <element signature="e#8594#10349#0" expanded="false" />
-            <element signature="e#10458#10933#0" expanded="false" />
-            <element signature="e#11063#11488#0" expanded="false" />
-            <element signature="e#11562#11703#0" expanded="false" />
-            <element signature="e#11738#11805#0" expanded="false" />
-            <element signature="e#11920#12654#0" expanded="false" />
-            <element signature="e#12737#13554#0" expanded="false" />
-            <element signature="e#16684#18662#0" expanded="false" />
-            <element signature="e#18729#18904#0" expanded="false" />
-            <element signature="e#19022#20221#0" expanded="false" />
+            <element signature="e#700#2026#0" expanded="false" />
+            <element signature="e#2165#4827#0" expanded="false" />
+            <element signature="e#4932#6478#0" expanded="false" />
+            <element signature="e#6615#6711#0" expanded="false" />
+            <element signature="e#6864#8669#0" expanded="false" />
+            <element signature="e#8810#10565#0" expanded="false" />
+            <element signature="e#10674#11149#0" expanded="false" />
+            <element signature="e#11279#11704#0" expanded="false" />
+            <element signature="e#11778#11919#0" expanded="false" />
+            <element signature="e#11954#12021#0" expanded="false" />
+            <element signature="e#12953#13770#0" expanded="false" />
+            <element signature="e#13949#15212#0" expanded="false" />
           </folding>
         </state>
       </provider>
