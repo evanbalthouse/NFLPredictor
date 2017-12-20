@@ -6,6 +6,11 @@ from sklearn.linear_model.stochastic_gradient import SGDRegressor
 from sklearn import svm
 from sklearn.neural_network import MLPRegressor
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.linear_model import SGDClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.neural_network import MLPClassifier
 from bs4 import BeautifulSoup, Comment
 import requests, re
 import pandas
@@ -331,40 +336,54 @@ def get_cf_model(pure_results):
     model = Model([team1_in, team2_in], x)
     model.compile(Adam(0.001), loss="binary_crossentropy")
 
-    model.fit([train[:, 0], train[:, 1]], train[:, 2], batch_size=64, nb_epoch=20, verbose=0)
+    model.fit([train[:, 0], train[:, 1]], train[:, 2], batch_size=64, nb_epoch=70, verbose=0)
     return model
 
 
 # Print out results in test set
-def print_results(test_set, pred_set, bet):
+def print_results(test_set, pred_set, bet, reg_flag):
     num_correct = 0
     running_gains = 0
     bet = 11
 
     test_set.index = range(len(test_set.index))
 
-    for index, row in test_set.iterrows():
-        fav_team = row["Favored_Team"]
-        v_line = row["Vegas_Line"]
+    if reg_flag:
 
-        if fav_team == row["Away_Team"]:
-            v_line *= -1
+        for index, row in test_set.iterrows():
+            v_line = row["Vegas_Line"]
 
-        pred_value = pred_set[index]
-        truth = row["Point_Differential"]
-        if ((pred_value > v_line) and (truth > v_line)) or (((pred_value < v_line) and (truth < v_line))):
-            running_gains += bet * 0.909091
-            num_correct += 1
-        else:
-            running_gains -= bet
+            pred_value = pred_set[index]
+            truth = row["Point_Differential"]
+            if ((pred_value > v_line) and (truth > v_line)) or (((pred_value < v_line) and (truth < v_line))):
+                running_gains += bet * 0.909091
+                num_correct += 1
+            else:
+                running_gains -= bet
 
-    print("Num correct: " + str(num_correct) + " out of " + str(len(pred_set)) + ", " + str(
-        num_correct / len(pred_set)) + "%")
-    print("On a bet of $" + str(bet) + " per game, winnings of $" + str(running_gains))
+        print("Num correct: " + str(num_correct) + " out of " + str(len(pred_set)) + ", " + str(
+            num_correct / len(pred_set)) + "%")
+        print("On a bet of $" + str(bet) + " per game, winnings of $" + str(running_gains))
+    else:
+        for index, row in test_set.iterrows():
+            v_line = row["Vegas_Line"]
 
+            pred_value = pred_set[index]
+            truth = row["Point_Differential"]
+            if ((pred_value == 1) and (truth > v_line)) or (((pred_value == 0) and (truth < v_line))):
+                running_gains += bet * 0.909091
+                num_correct += 1
+            else:
+                running_gains -= bet
+
+        print("Num correct: " + str(num_correct) + " out of " + str(len(pred_set)) + ", " + str(
+            num_correct / len(pred_set)) + "%")
+        print("On a bet of $" + str(bet) + " per game, winnings of $" + str(running_gains))
 
 # Calculate winning percentage and bet winnings for each year in given range
-def performance_by_year(begin_year, end_year, feature_dataset, full_dataset, feature_columns):
+def performance_by_year(begin_year, end_year, feature_dataset, full_dataset, feature_columns, reg_flag):
+    winnings = list()
+    corrects = list()
     for i in range(begin_year, end_year):
         testing_begin = i
         testing_end = i + 3
@@ -386,11 +405,45 @@ def performance_by_year(begin_year, end_year, feature_dataset, full_dataset, fea
         testing_features.loc[:, "Point_Differential"] = (
         testing_features["Away_Score"].copy() - testing_features["Home_Score"].copy())
 
-        model = linear_model.BayesianRidge()
-        lm = model.fit(training_features[feature_columns[8:33]], training_features["Point_Differential"])
-        predictions = lm.predict(testing_features[feature_columns[8:33]])
+        training_features["Vegas_Line"][training_features["Favored_Team"] == training_features["Away_Team"]] = -1 * \
+                                                                                                               training_features[
+                                                                                                                   "Vegas_Line"][
+                                                                                                                   training_features[
+                                                                                                                       "Favored_Team"] ==
+                                                                                                                   training_features[
+                                                                                                                       "Away_Team"]]
+        testing_features["Vegas_Line"][testing_features["Favored_Team"] == testing_features["Away_Team"]] = -1 * \
+                                                                                                            testing_features[
+                                                                                                                "Vegas_Line"][
+                                                                                                                testing_features[
+                                                                                                                    "Favored_Team"] ==
+                                                                                                                testing_features[
+                                                                                                                    "Away_Team"]]
 
-        print_results(testing_features, predictions, 11)
+        if reg_flag:
+
+            from sklearn import preprocessing
+
+            min_max_scaler = preprocessing.MinMaxScaler()
+            transformed_training = min_max_scaler.fit_transform(training_features[feature_columns[8:33]])
+            transformed_testing = min_max_scaler.transform(testing_features[feature_columns[8:33]])
+
+            model = MLPRegressor()
+            lm = model.fit(transformed_training, training_features["Point_Differential"])
+            predictions = lm.predict(transformed_testing)
+
+            print_results(transformed_testing, predictions, 11, reg_flag)
+        else:
+
+            training_features["Over_Under"] = numpy.where(
+                training_features["Point_Differential"] > training_features["Vegas_Line"], 1, 0)
+            testing_features["Over_Under"] = numpy.where(
+                testing_features["Point_Differential"] > testing_features["Vegas_Line"], 1, 0)
+
+            model = svm.SVC()
+            classifier = model.fit(training_features[feature_columns[7:33]], training_features["Over_Under"])
+            predictions = classifier.predict(testing_features[feature_columns[7:33]])
+            print_results(testing_features, predictions, 11, reg_flag)
 
 
 # Create team id lookup
@@ -400,7 +453,7 @@ team_dict = create_team_dict()
 raw_results = "results_data_full.csv"
 
 # Rolling average length
-rolling_avg_window = 3
+rolling_avg_window = 4
 
 # Hold the columns for the future feature dataframe
 feature_columns = ["Week_ID", "Year", "Away_Team", "Away_Score", "Home_Team", "Home_Score", "Favored_Team", "Vegas_Line",
@@ -499,7 +552,7 @@ features.loc[:, "Home_Elo"] = home_elo
 #############################################################################
 
 # Get train/test results for each test season from 2007-2016
-#performance_by_year(2003, 2013, features, raw_data, feature_columns)
+#performance_by_year(2003, 2013, features, raw_data, feature_columns, False)
 
 training_start_year = 2003
 training_final_year = 2006
@@ -508,7 +561,7 @@ testing_year = 2007
 training_features = year_slice(features, training_start_year, training_final_year + 1)
 testing_features = year_slice(features, testing_year, testing_year + 1)
 
-full_results = get_simple_results(raw_data, 2005, training_final_year + 1)
+full_results = get_simple_results(raw_data, training_start_year, training_final_year + 1)
 
 model = get_cf_model(full_results)
 
@@ -522,11 +575,40 @@ testing_features.loc[:, "CF_Result"] = model.predict(
 testing_features.loc[:, "Point_Differential"] = (
     testing_features["Away_Score"].copy() - testing_features["Home_Score"].copy())
 
+training_features["Vegas_Line"][training_features["Favored_Team"] == training_features["Away_Team"]] = -1 * \
+                                                                                                       training_features[
+                                                                                                           "Vegas_Line"][
+                                                                                                           training_features[
+                                                                                                               "Favored_Team"] ==
+                                                                                                           training_features[
+                                                                                                               "Away_Team"]]
+testing_features["Vegas_Line"][testing_features["Favored_Team"] == testing_features["Away_Team"]] = -1 * \
+                                                                                                    testing_features[
+                                                                                                        "Vegas_Line"][
+                                                                                                        testing_features[
+                                                                                                            "Favored_Team"] ==
+                                                                                                        testing_features[
+                                                                                                            "Away_Team"]]
+training_features["Over_Under"] = numpy.where(
+                training_features["Point_Differential"] > training_features["Vegas_Line"], 1, 0)
+testing_features["Over_Under"] = numpy.where(
+                testing_features["Point_Differential"] > testing_features["Vegas_Line"], 1, 0)
+
+model = svm.SVC()
+classifier = model.fit(training_features[feature_columns[7:33]], training_features["Over_Under"])
+predictions = classifier.predict(testing_features[feature_columns[7:33]])
+print_results(testing_features, predictions, 11, False)
+
+training_features.to_csv("training_features_classifier.csv")
+testing_features.to_csv("testing_features_classifier.csv")
+numpy.savetxt("predictions_classifier.csv", predictions, delimiter=",")
 '''model = linear_model.ElasticNet()
 lm = model.fit(training_features[feature_columns[8:33]], training_features["Point_Differential"])
 predictions = lm.predict(testing_features[feature_columns[8:33]])
 print_results(testing_features, predictions, 11)'''
 
+
+'''training_features.to_csv("training_features.csv")
 
 models = []
 models.append(("LR", linear_model.Lasso()))
@@ -556,4 +638,30 @@ for name, model in models:
     mse = numpy.mean((predictions - testing_features["Point_Differential"] ** 2))
 
     score = model.score(transformed_testing, testing_features["Point_Differential"])
-    print("%s: %f %f" % (name, score, mse))
+    print("%s: %f %f" % (name, score, mse))'''
+
+# Testing for classification model for no cover/cover
+training_features["Vegas_Line"][training_features["Favored_Team"] == training_features["Away_Team"]] = -1 * training_features["Vegas_Line"][training_features["Favored_Team"] == training_features["Away_Team"]]
+testing_features["Vegas_Line"][testing_features["Favored_Team"] == testing_features["Away_Team"]] = -1 * testing_features["Vegas_Line"][testing_features["Favored_Team"] == testing_features["Away_Team"]]
+
+training_features["Over_Under"] = numpy.where(training_features["Point_Differential"] > training_features["Vegas_Line"], 1, 0)
+testing_features["Over_Under"] = numpy.where(testing_features["Point_Differential"] > testing_features["Vegas_Line"], 1, 0)
+
+
+
+'''models = []
+models.append(("SVM", svm.SVC()))
+models.append(("Ada", AdaBoostClassifier()))
+models.append(("LR", linear_model.LogisticRegression()))
+models.append(("SGD", SGDClassifier(shuffle=True)))
+models.append(("NN", MLPClassifier()))
+models.append(("RF", RandomForestClassifier()))
+models.append(("GBC", GradientBoostingClassifier()))
+
+
+for name, model in models:
+    lm = model.fit(training_features[feature_columns[7:33]], training_features["Over_Under"])
+    predictions = lm.predict(testing_features[feature_columns[7:33]])
+
+    score = model.score(testing_features[feature_columns[7:33]], testing_features["Over_Under"])
+    print("%s: %f" % (name, score))'''
