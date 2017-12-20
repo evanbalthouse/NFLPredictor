@@ -320,7 +320,7 @@ def get_cf_model(pure_results):
     numpy.random.shuffle(train)
 
     n = 32
-    n_factors = 16
+    n_factors = 75
 
     team1_in, t1 = embedding_input("team1_in", n, n_factors, 1e-4)
     team2_in, t2 = embedding_input("team2_in", n, n_factors, 1e-4)
@@ -336,7 +336,11 @@ def get_cf_model(pure_results):
     model = Model([team1_in, team2_in], x)
     model.compile(Adam(0.001), loss="binary_crossentropy")
 
-    model.fit([train[:, 0], train[:, 1]], train[:, 2], batch_size=64, nb_epoch=70, verbose=0)
+    history = model.fit([train[:, 0], train[:, 1]], train[:, 2], batch_size=64, nb_epoch=20, verbose=0, shuffle=True)
+
+    plt.plot(history.history["loss"])
+    plt.show()
+
     return model
 
 
@@ -365,18 +369,19 @@ def print_results(test_set, pred_set, bet, reg_flag):
             num_correct / len(pred_set)) + "%")
         print("On a bet of $" + str(bet) + " per game, winnings of $" + str(running_gains))
     else:
+        tot = len(pred_set)
         for index, row in test_set.iterrows():
             v_line = row["Vegas_Line"]
 
             pred_value = pred_set[index]
             truth = row["Point_Differential"]
-            if ((pred_value == 1) and (truth > v_line)) or (((pred_value == 0) and (truth < v_line))):
+            if ((pred_value > 0.5) and (truth > v_line)) or (((pred_value <= 0.5) and (truth < v_line))):
                 running_gains += bet * 0.909091
                 num_correct += 1
             else:
                 running_gains -= bet
 
-        print("Num correct: " + str(num_correct) + " out of " + str(len(pred_set)) + ", " + str(
+        print("Num correct: " + str(num_correct) + " out of " + str(tot) + ", " + str(
             num_correct / len(pred_set)) + "%")
         print("On a bet of $" + str(bet) + " per game, winnings of $" + str(running_gains))
 
@@ -386,7 +391,7 @@ def performance_by_year(begin_year, end_year, feature_dataset, full_dataset, fea
     corrects = list()
     for i in range(begin_year, end_year):
         testing_begin = i
-        testing_end = i + 3
+        testing_end = i + 2
 
         training_features = year_slice(feature_dataset, testing_begin, testing_end + 1)
         testing_features = year_slice(feature_dataset, testing_end + 1, testing_end + 2)
@@ -440,7 +445,7 @@ def performance_by_year(begin_year, end_year, feature_dataset, full_dataset, fea
             testing_features["Over_Under"] = numpy.where(
                 testing_features["Point_Differential"] > testing_features["Vegas_Line"], 1, 0)
 
-            model = svm.SVC()
+            model = linear_model.LogisticRegression()
             classifier = model.fit(training_features[feature_columns[7:33]], training_features["Over_Under"])
             predictions = classifier.predict(testing_features[feature_columns[7:33]])
             print_results(testing_features, predictions, 11, reg_flag)
@@ -594,7 +599,62 @@ training_features["Over_Under"] = numpy.where(
 testing_features["Over_Under"] = numpy.where(
                 testing_features["Point_Differential"] > testing_features["Vegas_Line"], 1, 0)
 
-model = svm.SVC()
+
+model = linear_model.LogisticRegression(C=0.1, penalty="l1")
+classifier = model.fit(training_features[feature_columns[7:33]], training_features["Over_Under"])
+predictions = classifier.predict(testing_features[feature_columns[7:33]])
+print_results(testing_features, predictions, 11, False)
+print(model.coef_)
+#testing_features.to_csv("testing_features_classifier.csv")
+#numpy.savetxt("predictions_classifier.csv", predictions, delimiter=",")
+
+'''import sklearn.model_selection as cv
+
+models = []
+models.append(("SVM", svm.SVC()))
+models.append(("Ada", AdaBoostClassifier()))
+models.append(("LR", linear_model.LogisticRegression()))
+models.append(("SGD", SGDClassifier(shuffle=True)))
+models.append(("NN", MLPClassifier()))
+models.append(("RF", RandomForestClassifier()))
+models.append(("GBC", GradientBoostingClassifier()))
+results = []
+names = []
+
+for name, model in models:
+    cv_results = cv.cross_val_score(model, training_features[feature_columns[7:33]].values, training_features["Over_Under"].values, cv=10, scoring="accuracy")
+    results.append(cv_results)
+    names.append(names)
+    msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
+    print(msg)'''
+
+'''import sklearn.model_selection as cv
+
+models = []
+models.append(("LR", linear_model.Lasso()))
+models.append(("EN", linear_model.ElasticNet()))
+models.append(("BR", linear_model.BayesianRidge()))
+models.append(("ARD", linear_model.ARDRegression()))
+models.append(("Ridge", linear_model.Ridge()))
+models.append(("Linear", linear_model.LinearRegression()))
+models.append(("SVM", svm.SVR()))
+models.append(("SGD", SGDRegressor()))
+models.append(("NN", MLPRegressor()))
+models.append(("RF", RandomForestRegressor()))
+models.append(("GBR", GradientBoostingRegressor()))
+results = []
+names = []
+
+for name, model in models:
+    cv_results = cv.cross_val_score(model, training_features[feature_columns[8:33]].values, training_features["Point_Differential"].values, cv=10, scoring="neg_mean_squared_error")
+    results.append(cv_results)
+    names.append(names)
+    msg = "%s: %f (%f)" % (name, cv_results.mean(), cv_results.std())
+    print(msg)'''
+
+
+'''
+model = RandomForestClassifier()
 classifier = model.fit(training_features[feature_columns[7:33]], training_features["Over_Under"])
 predictions = classifier.predict(testing_features[feature_columns[7:33]])
 print_results(testing_features, predictions, 11, False)
@@ -602,7 +662,7 @@ print_results(testing_features, predictions, 11, False)
 training_features.to_csv("training_features_classifier.csv")
 testing_features.to_csv("testing_features_classifier.csv")
 numpy.savetxt("predictions_classifier.csv", predictions, delimiter=",")
-'''model = linear_model.ElasticNet()
+model = linear_model.ElasticNet()
 lm = model.fit(training_features[feature_columns[8:33]], training_features["Point_Differential"])
 predictions = lm.predict(testing_features[feature_columns[8:33]])
 print_results(testing_features, predictions, 11)'''
